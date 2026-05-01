@@ -26,12 +26,14 @@ CREATE TABLE `cart_items` (
   `id` int NOT NULL AUTO_INCREMENT,
   `product_id` int NOT NULL,
   `quantity` int NOT NULL,
+  `cart_id` int NOT NULL,
   `created_at` timestamp NULL DEFAULT (now()),
   `updated_at` timestamp NULL DEFAULT (now()),
   PRIMARY KEY (`id`),
   KEY `product_id` (`product_id`),
   KEY `ix_cart_items_id` (`id`),
-  CONSTRAINT `cart_items_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+  CONSTRAINT `cart_items_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cart_items_ibfk_2` FOREIGN KEY (`cart_id`) REFERENCES `carts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -41,11 +43,23 @@ CREATE TABLE `cart_items` (
 
 LOCK TABLES `cart_items` WRITE;
 /*!40000 ALTER TABLE `cart_items` DISABLE KEYS */;
-INSERT INTO `cart_items` VALUES (14,2,1,'2026-04-08 11:54:23','2026-04-08 11:54:23');
+INSERT INTO `cart_items` VALUES (14,2,1,1,'2026-04-08 11:54:23','2026-04-08 11:54:23');
 /*!40000 ALTER TABLE `cart_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
---
+Drop table if exists `carts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `carts` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `total_price` decimal(10,2) NOT NULL,
+  `user_id` int NULL,
+  `created_at` timestamp NULL DEFAULT (now()),
+  `updated_at` timestamp NULL DEFAULT (now()),
+  PRIMARY KEY (`id`),
+  KEY `ix_carts_id` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved
 -- Table structure for table `products`
 --
 

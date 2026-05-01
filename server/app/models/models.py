@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, DECIMAL, ForeignKey, TIMESTAMP
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from .database import Base
+from ..database import Base
 
 class Product(Base):
     __tablename__ = "products"
@@ -15,6 +15,7 @@ class Product(Base):
     stock = Column(Integer, default=0)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    cart_items = relationship("CartItem", back_populates="product") 
 
 class CartItem(Base):
     __tablename__ = "cart_items"
@@ -22,7 +23,9 @@ class CartItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
     quantity = Column(Integer, nullable=False, default=1)
+    cart_id = Column(Integer, ForeignKey("carts.id", ondelete="CASCADE"), nullable=False)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
-    product = relationship("Product")
+    product = relationship("Product", back_populates="cart_items")
+    cart = relationship("Cart", back_populates="items")

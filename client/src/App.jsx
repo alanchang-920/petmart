@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "./services/api";
 import "./App.css";
+import CartService from "./services/cartService";
+import CartSidebar from "./components/CartSidebar";
 
 const placeholderImage = "/images/placeholder.jpg";
+
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -12,11 +15,6 @@ function App() {
   const [sortOption, setSortOption] = useState("default");
   const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCart();
-  }, []);
-
   const showToast = (message, type = "success") => {
     setToast({ message, type });
 
@@ -25,69 +23,55 @@ function App() {
     }, 2000);
   };
 
+const cartService = new CartService(api, showToast, setCartItems , setProducts);
+  useEffect(() => {
+    cartService.getAllCartItems();
+    fetchProducts();
+  }, []);
+
+
   const fetchProducts = async () => {
     try {
       const response = await api.get("/products/");
-      setProducts(response.data);
+      setProducts(cartService.getCurrentProducts(response.data));
     } catch (error) {
       console.error("Failed to fetch products:", error);
       showToast("Failed to load products", "error");
     }
   };
 
-  const fetchCart = async () => {
-    try {
-      const response = await api.get("/cart/");
-      setCartItems(response.data);
-    } catch (error) {
-      console.error("Failed to fetch cart:", error);
-      showToast("Failed to load cart", "error");
-    }
-  };
-
-  const addToCart = async (productId) => {
-    try {
-      await api.post("/cart/", {
-        product_id: productId,
-        quantity: 1,
-      });
-
-      fetchCart();
-      showToast("Added to cart!", "success");
-    } catch (error) {
-      console.error("Failed to add to cart:", error);
-      showToast("Failed to add item", "error");
-    }
-  };
-
-  const removeCartItem = async (cartItemId) => {
-    try {
-      await api.delete(`/cart/${cartItemId}`);
-      fetchCart();
-      showToast("Removed from cart!", "success");
-    } catch (error) {
-      console.error("Failed to remove cart item:", error);
-      showToast("Failed to remove item", "error");
-    }
-  };
-
-  const updateCartQuantity = async (cartItemId, newQuantity) => {
-    try {
-      if (newQuantity <= 0) {
-        await api.delete(`/cart/${cartItemId}`);
-        showToast("Removed from cart!", "success");
+const updateCartQuantity = (productId, newQuantity) => {
+    if (cartService.getCurrentQuantityInCart(productId) < 1) {
+     // cartService.removeCartItem(productId);
+      cartService.removeCartItem(productId, products);
+    } else {
+      if (newQuantity > products.find(p => p.id === productId)?.stock && newQuantity > 0) {
+        showToast("Not enough stock available", "error");
       } else {
-        await api.put(`/cart/${cartItemId}`, {
-          quantity: newQuantity,
-        });
-      }
+        products.find(p => p.id === productId).stock -= newQuantity; 
+        cartService.updateCartQuantity(productId, newQuantity);
 
-      fetchCart();
-    } catch (error) {
-      console.error("Failed to update cart quantity:", error);
-      showToast("Failed to update quantity", "error");
+      }
     }
-  };
+  }
+  
+const removeFromCart = (productId) => {
+    cartService.removeCartItem(productId, products);
+  }
+
+const handleOrder = () => {
+    cartService.sendOrder();
+  }
+
+const addToCart = (productId) => {
+    const product = products.find(p => p.id === productId);
+    if (product.stock < 1) {
+      showToast("Out of stock", "error");
+    } else {
+      product.stock -= 1; 
+      cartService.addToCart(productId);
+    }
+  }
 
   const productMap = useMemo(() => {
     const map = {};
@@ -252,65 +236,14 @@ function App() {
           </div>
         </section>
 
-        <aside className="cart-sidebar">
-          <h2>Shopping Cart</h2>
-
-          {cartItems.length === 0 ? (
-            <p className="cart-empty">Your cart is empty.</p>
-          ) : (
-            <>
-              {cartItems.map((item) => {
-                const product = productMap[item.product_id];
-
-                return (
-                  <div className="mini-cart-item" key={item.id}>
-                    <h3>{product ? product.name : "Unknown Product"}</h3>
-
-                    <div className="mini-qty-controls">
-                      <button
-                        className="mini-qty-btn"
-                        onClick={() =>
-                          updateCartQuantity(item.id, item.quantity - 1)
-                        }
-                      >
-                        -
-                      </button>
-
-                      <span className="mini-qty-value">{item.quantity}</span>
-
-                      <button
-                        className="mini-qty-btn"
-                        onClick={() =>
-                          updateCartQuantity(item.id, item.quantity + 1)
-                        }
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <p className="mini-subtotal">
-                      Subtotal: $
-                      {product
-                        ? (Number(product.price) * item.quantity).toFixed(2)
-                        : "0.00"}
-                    </p>
-
-                    <button
-                      className="mini-remove-btn"
-                      onClick={() => removeCartItem(item.id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                );
-              })}
-
-              <div className="mini-cart-total">
-                <h3>Total: ${totalPrice.toFixed(2)}</h3>
-              </div>
-            </>
-          )}
-        </aside>
+        <CartSidebar
+          cartItems={cartItems}
+          productMap={productMap}
+          totalPrice={totalPrice}
+          onUpdateQuantity={updateCartQuantity}
+          onRemoveCartItem={removeFromCart}
+          onOrder={handleOrder}
+        />
       </main>
     </div>
   );
