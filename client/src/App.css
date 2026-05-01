@@ -346,6 +346,9 @@ body {
   border-top: 1px solid #ececec;
   margin-top: 22px;
   padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .mini-cart-total h3 {
@@ -353,6 +356,24 @@ body {
   font-size: 24px;
   font-weight: 900;
   color: #111827;
+}
+
+.mini-order-btn {
+  align-self: flex-end;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: white;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.mini-order-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
 }
 
 .toast {
