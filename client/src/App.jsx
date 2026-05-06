@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "./services/api";
+import { loginUser, getCurrentUser } from "./services/userService";
+import storage from "./utils/storage";
 import "./App.css";
 import CartService from "./services/cartService";
 import CartSidebar from "./components/CartSidebar";
@@ -8,6 +10,13 @@ const placeholderImage = "/images/placeholder.jpg";
 
 
 function App() {
+// Add more attributes to the user
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [currentUser, setCurrentUser] = useState(storage.getUser());
+// homepage, product listing, cart
+  const [page, setPage] = useState("home"); 
+
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,11 +32,54 @@ function App() {
     }, 2000);
   };
 
+// Added User's login and fetching current user details
+  const handleLogin = async () => {
+    try {
+      const data = await loginUser(username, password);
+      storage.saveAuth(data);
+
+      const me = await getCurrentUser();
+      setCurrentUser(me);
+
+      setPage("home"); 
+
+      showToast("Login successful");
+    } catch (err) {
+      console.error(err);
+      showToast("Login failed", "error");
+    }
+  };
+// Added logout functionality
+  const handleLogout = () => {
+  storage.logout();
+  setCurrentUser(null);
+  setPage("home");
+  showToast("Logged out");
+};
+
 const cartService = new CartService(api, showToast, setCartItems , setProducts);
   useEffect(() => {
     cartService.getAllCartItems();
     fetchProducts();
   }, []);
+
+  // Check for existing token and fetch user details on app load
+  useEffect(() => {
+  const initUser = async () => {
+    const token = storage.getToken();
+    if (!token) return;
+
+    try {
+      const me = await getCurrentUser();
+      setCurrentUser(me);
+    } catch (err) {
+      console.error("Token invalid");
+      storage.logout();
+    }
+  };
+
+  initUser();
+}, []);
 
 
   const fetchProducts = async () => {
@@ -134,13 +186,44 @@ const addToCart = (productId) => {
         <div className="topbar-inner">
           <div className="brand">PetMart</div>
           <nav className="nav-links">
-            <span>Home</span>
-            <span>Products</span>
+            <span onClick={() => setPage("home")}>Home</span>
+            <span onClick={() => setPage("home")}>Products</span>
             <span>Cart</span>
+
+            {!currentUser ? (
+              <span onClick={() => setPage("login")}>Login</span>
+            ) : (
+              <>
+                <span>{currentUser.username}</span>
+                <span onClick={handleLogout}>Logout</span>
+              </>
+            )}
           </nav>
         </div>
       </header>
 
+      {page === "login" && (
+        <div className="auth-page" style={{ padding: "20px" }}>
+          <h2>Login</h2>
+
+          <input
+            placeholder="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+
+          <input
+            placeholder="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button onClick={handleLogin}>Login</button>
+        </div>
+      )}
+
+      {page === "home" && (
       <main className="shop-layout">
         <section className="catalog-section">
           <div className="catalog-header">
@@ -245,6 +328,7 @@ const addToCart = (productId) => {
           onOrder={handleOrder}
         />
       </main>
+      )}
     </div>
   );
 }
