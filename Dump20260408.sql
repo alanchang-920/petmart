@@ -54,6 +54,7 @@ CREATE TABLE `carts` (
   `id` int NOT NULL AUTO_INCREMENT,
   `total_price` decimal(10,2) NOT NULL,
   `user_id` int NULL,
+  `status` varchar(20) DEFAULT 'pending',
   `created_at` timestamp NULL DEFAULT (now()),
   `updated_at` timestamp NULL DEFAULT (now()),
   PRIMARY KEY (`id`),
