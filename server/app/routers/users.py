@@ -1,7 +1,15 @@
+from ..auth import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    get_current_user,
+    require_admin
+)
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from ..database import get_db
+from fastapi.security import OAuth2PasswordRequestForm
 
 from .. import models
 from .. import schemas
@@ -27,7 +35,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     new_user = models.User(
         username=user.username,
         email=user.email,
-        password_hash=user.password,  # In production, hash the password!
+        password_hash=hash_password(user.password),  # In production, hash the password!
         role="user"
     )
 
@@ -37,27 +45,46 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 @router.post("/login")
-def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.username == user.username).first()
-    if not db_user or db_user.password_hash != user.password:
+def login_user(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    db_user = db.query(models.User).filter(
+        models.User.username == form_data.username
+    ).first()
+
+    if not db_user or not verify_password(form_data.password, db_user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid username or password")
-    
+
+    token = create_access_token({
+        "user_id": db_user.id,
+        "username": db_user.username,
+        "role": db_user.role
+    })
+
     return {
-        "message": "Login successful",
-        "user": {
-            "id": db_user.id,
-            "username": db_user.username,
-            "email": db_user.email,
-            "role": db_user.role
-        }
+        "access_token": token,
+        "token_type": "bearer"
     }
 
+@router.get("/me", response_model=schemas.UserOut)
+def get_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
 @router.get("/", response_model=list[schemas.UserOut])
-def get_users(db: Session = Depends(get_db)):
+def get_users(
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(require_admin)
+):
     return db.query(models.User).all()
 
 @router.put("/{user_id}", response_model=schemas.UserOut)
-def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(get_db)):
+def update_user(
+    user_id: int, 
+    user_update: schemas.AdminUpdate, 
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(require_admin),
+    ):
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -67,14 +94,20 @@ def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Dep
     if user_update.email:
         db_user.email = user_update.email
     if user_update.password:
-        db_user.password_hash = user_update.password  # In production, hash the password!
+        db_user.password_hash = hash_password(user_update.password)  # In production, hash the password!
+    if user_update.role:
+        db_user.role = user_update.role
 
     db.commit()
     db.refresh(db_user)
     return db_user
 
 @router.delete("/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db)):
+def delete_user(
+    user_id: int, 
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(require_admin)
+):
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
