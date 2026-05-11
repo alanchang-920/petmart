@@ -3,6 +3,7 @@ import api from "./services/api";
 import "./App.css";
 import CartService from "./services/cartService";
 import CartSidebar from "./components/CartSidebar";
+import ProductManagement from "./pages/ProductManagement";
 
 const placeholderImage = "/images/placeholder.jpg";
 
@@ -14,6 +15,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOption, setSortOption] = useState("default");
   const [toast, setToast] = useState(null);
+  const [isAdminView, setIsAdminView] = useState(false);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -137,10 +139,20 @@ const addToCart = (productId) => {
             <span>Home</span>
             <span>Products</span>
             <span>Cart</span>
+
+            <button
+              className="admin-panel-btn"
+              onClick={() => setIsAdminView(!isAdminView)}
+            >
+              {isAdminView ? "Back to Store" : "Admin Panel"}
+            </button>
           </nav>
         </div>
       </header>
 
+      {isAdminView ? (
+       <ProductManagement />
+      ) : (
       <main className="shop-layout">
         <section className="catalog-section">
           <div className="catalog-header">
@@ -245,6 +257,7 @@ const addToCart = (productId) => {
           onOrder={handleOrder}
         />
       </main>
+    )}
     </div>
   );
 }
