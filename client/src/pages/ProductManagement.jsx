@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../services/api";
 
 const placeholderImage = "/images/placeholder.jpg";
@@ -14,6 +14,7 @@ function ProductManagement() {
     stock: "",
   });
   const [editingId, setEditingId] = useState(null);
+  const formRef = useRef(null);
 
   const fetchProducts = async () => {
     try {
@@ -75,6 +76,7 @@ function ProductManagement() {
 
   const handleEdit = (product) => {
     setEditingId(product.id);
+    
     setForm({
       name: product.name || "",
       description: product.description || "",
@@ -83,7 +85,12 @@ function ProductManagement() {
       image_url: product.image_url || "",
       stock: product.stock || "",
     });
-  };
+    
+    formRef.current?.scrollIntoView({
+      behavior: "smooth",
+       block: "start",
+      });
+    };
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -108,7 +115,7 @@ function ProductManagement() {
         Manage products, inventory, and store listings.
       </p>
 
-      <form onSubmit={handleSubmit} className="admin-form">
+      <form ref={formRef} onSubmit={handleSubmit} className="admin-form">
         <h2>{editingId ? "Edit Product" : "Add Product"}</h2>
 
         <div className="admin-form-grid">
