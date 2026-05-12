@@ -8,12 +8,13 @@ import CartSidebar from "./components/CartSidebar";
 import AdminCart from "./components/AdminCart";
 import ProductManagement from "./pages/ProductManagement";
 
-
 const placeholderImage = "/images/placeholder.jpg";
 
 function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [authMode, setAuthMode] = useState("login");
   const [currentUser, setCurrentUser] = useState(storage.getUser());
 
   const [page, setPage] = useState("home");
@@ -25,9 +26,6 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOption, setSortOption] = useState("default");
   const [toast, setToast] = useState(null);
-
-  const [authMode, setAuthMode] = useState("login");
-  const [email, setEmail] = useState("");
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
@@ -217,16 +215,6 @@ function App() {
             </span>
 
             <span
-              className={view === "cart-admin" ? "nav-active" : ""}
-              onClick={() => {
-                setPage("home");
-                setView("cart-admin");
-              }}
-            >
-              Admin Cart
-            </span>
-
-            <span
               className={view === "product-admin" ? "nav-active" : ""}
               onClick={() => {
                 setPage("home");
@@ -234,6 +222,16 @@ function App() {
               }}
             >
               Product Admin
+            </span>
+
+            <span
+              className={view === "cart-admin" ? "nav-active" : ""}
+              onClick={() => {
+                setPage("home");
+                setView("cart-admin");
+              }}
+            >
+              Admin Cart
             </span>
 
             {!currentUser ? (
@@ -248,62 +246,64 @@ function App() {
         </div>
       </header>
 
-    {page === "login" && (
-      <div className="auth-page" style={{ padding: "20px" }}>
-        <h2>{authMode === "login" ? "Login" : "Register"}</h2>
+      {page === "login" && (
+        <div className="auth-page" style={{ padding: "20px" }}>
+          <h2>{authMode === "login" ? "Login" : "Register"}</h2>
 
-        <input
-          placeholder="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-
-        {authMode === "register" && (
           <input
-            placeholder="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            placeholder="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
           />
-        )}
 
-        <input
-          placeholder="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          {authMode === "register" && (
+            <input
+              placeholder="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          )}
 
-        {authMode === "login" ? (
-          <button onClick={handleLogin}>Login</button>
-        ) : (
-          <button onClick={handleRegister}>Register</button>
-        )}
+          <input
+            placeholder="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-        <p>
-          {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
+          {authMode === "login" ? (
+            <button onClick={handleLogin}>Login</button>
+          ) : (
+            <button onClick={handleRegister}>Register</button>
+          )}
 
-          <button
-            type="button"
-            onClick={() =>
-              setAuthMode(authMode === "login" ? "register" : "login")
-            }
-          >
-            {authMode === "login" ? "Register" : "Login"}
-          </button>
-        </p>
-      </div>
-    )}
+          <p>
+            {authMode === "login"
+              ? "Don't have an account? "
+              : "Already have an account? "}
 
-      {page === "home" && view === "cart-admin" && (
-        <main className="admin-layout">
-          <AdminCart showToast={showToast} />
-        </main>
+            <button
+              type="button"
+              onClick={() =>
+                setAuthMode(authMode === "login" ? "register" : "login")
+              }
+            >
+              {authMode === "login" ? "Register" : "Login"}
+            </button>
+          </p>
+        </div>
       )}
 
       {page === "home" && view === "product-admin" && (
         <main className="admin-layout">
           <ProductManagement />
+        </main>
+      )}
+
+      {page === "home" && view === "cart-admin" && (
+        <main className="admin-layout">
+          <AdminCart showToast={showToast} />
         </main>
       )}
 
@@ -378,9 +378,7 @@ function App() {
                   <div className="store-info">
                     <h3>{product.name}</h3>
 
-                    <p className="store-description">
-                      {product.description}
-                    </p>
+                    <p className="store-description">{product.description}</p>
 
                     <div className="store-meta">
                       <p>{product.category}</p>
