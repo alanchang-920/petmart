@@ -6,17 +6,17 @@ import "./App.css";
 import CartService from "./services/cartService";
 import CartSidebar from "./components/CartSidebar";
 import AdminCart from "./components/AdminCart";
+import ProductManagement from "./components/ProductManagement";
 
 const placeholderImage = "/images/placeholder.jpg";
 
 function App() {
-  // Add more attributes to the user
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [currentUser, setCurrentUser] = useState(storage.getUser());
 
-  // homepage, product listing, cart
   const [page, setPage] = useState("home");
+  const [view, setView] = useState("shop");
 
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState([]);
@@ -24,14 +24,10 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOption, setSortOption] = useState("default");
   const [toast, setToast] = useState(null);
-  const [isAdminView, setIsAdminView] = useState(false);
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
-
-    setTimeout(() => {
-      setToast(null);
-    }, 2000);
+    setTimeout(() => setToast(null), 2000);
   }, []);
 
   const cartService = useMemo(() => {
@@ -53,7 +49,6 @@ function App() {
     fetchProducts();
   }, [cartService, fetchProducts]);
 
-  // Check for existing token and fetch user details on app load
   useEffect(() => {
     const initUser = async () => {
       const token = storage.getToken();
@@ -71,7 +66,6 @@ function App() {
     initUser();
   }, []);
 
-  // Added User's login and fetching current user details
   const handleLogin = async () => {
     try {
       const data = await loginUser(username, password);
@@ -81,6 +75,7 @@ function App() {
       setCurrentUser(me);
 
       setPage("home");
+      setView("shop");
       showToast("Login successful");
     } catch (err) {
       console.error(err);
@@ -88,7 +83,6 @@ function App() {
     }
   };
 
-  // Added logout functionality
   const handleLogout = useCallback(() => {
     storage.logout();
     setCurrentUser(null);
@@ -98,20 +92,19 @@ function App() {
   }, [showToast]);
 
   const updateCartQuantity = (productId, newQuantity) => {
-    if (cartService.getCurrentQuantityInCart(productId) < 1) {
+    if (newQuantity < 1) {
       cartService.removeCartItem(productId, products);
-    } else {
-      const product = products.find((p) => p.id === productId);
-
-      if (newQuantity > product?.stock && newQuantity > 0) {
-        showToast("Not enough stock available", "error");
-      } else {
-        if (product) {
-          product.stock -= newQuantity;
-        }
-        cartService.updateCartQuantity(productId, newQuantity);
-      }
+      return;
     }
+
+    const product = products.find((p) => p.id === productId);
+
+    if (newQuantity > product?.stock) {
+      showToast("Not enough stock available", "error");
+      return;
+    }
+
+    cartService.updateCartQuantity(productId, newQuantity);
   };
 
   const removeFromCart = (productId) => {
@@ -127,10 +120,10 @@ function App() {
 
     if (!product || product.stock < 1) {
       showToast("Out of stock", "error");
-    } else {
-      product.stock -= 1;
-      cartService.addToCart(productId);
+      return;
     }
+
+    cartService.addToCart(productId);
   };
 
   const productMap = useMemo(() => {
@@ -206,13 +199,23 @@ function App() {
             </span>
 
             <span
-              className={view === "admin" ? "nav-active" : ""}
+              className={view === "cart-admin" ? "nav-active" : ""}
               onClick={() => {
                 setPage("home");
-                setView("admin");
+                setView("cart-admin");
               }}
             >
-              Admin
+              Admin Cart
+            </span>
+
+            <span
+              className={view === "product-admin" ? "nav-active" : ""}
+              onClick={() => {
+                setPage("home");
+                setView("product-admin");
+              }}
+            >
+              Product Admin
             </span>
 
             {!currentUser ? (
@@ -223,13 +226,6 @@ function App() {
                 <span onClick={handleLogout}>Logout</span>
               </>
             )}
-
-            <button
-              className="admin-panel-btn"
-              onClick={() => setIsAdminView(!isAdminView)}
-            >
-              {isAdminView ? "Back to Store" : "Admin Panel"}
-            </button>
           </nav>
         </div>
       </header>
@@ -255,122 +251,126 @@ function App() {
         </div>
       )}
 
-      {page === "home" &&
-        (view === "admin" ? (
-          <main className="admin-layout">
-            <AdminCart showToast={showToast} />
-          </main>
-        ) : (
-          {isAdminView ? (
-       <ProductManagement />
-      ) : (
-      <main className="shop-layout">
-            <section className="catalog-section">
-              <div className="catalog-header">
-                <div className="catalog-left">
-                  <p className="breadcrumb">Home / Products</p>
-                  <h1>Products</h1>
-                  <p className="catalog-subtitle">
-                    Discover pet essentials your companions will love.
-                  </p>
-                </div>
+      {page === "home" && view === "cart-admin" && (
+        <main className="admin-layout">
+          <AdminCart showToast={showToast} />
+        </main>
+      )}
 
-                <div className="catalog-right">
-                  <label htmlFor="sort">Sort by</label>
-                  <select
-                    id="sort"
-                    value={sortOption}
-                    onChange={(e) => setSortOption(e.target.value)}
-                  >
-                    <option value="default">Featured</option>
-                    <option value="price-low-high">Price: Low to High</option>
-                    <option value="price-high-low">Price: High to Low</option>
-                    <option value="name-a-z">Name: A to Z</option>
-                    <option value="name-z-a">Name: Z to A</option>
-                  </select>
-                </div>
+      {page === "home" && view === "product-admin" && (
+        <main className="admin-layout">
+          <ProductManagement />
+        </main>
+      )}
+
+      {page === "home" && view === "shop" && (
+        <main className="shop-layout">
+          <section className="catalog-section">
+            <div className="catalog-header">
+              <div className="catalog-left">
+                <p className="breadcrumb">Home / Products</p>
+                <h1>Products</h1>
+                <p className="catalog-subtitle">
+                  Discover pet essentials your companions will love.
+                </p>
               </div>
 
-              <div className="filter-row">
-                <div className="filter-left">
-                  <span className="filter-title">Filter</span>
-                </div>
+              <div className="catalog-right">
+                <label htmlFor="sort">Sort by</label>
+                <select
+                  id="sort"
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                >
+                  <option value="default">Featured</option>
+                  <option value="price-low-high">Price: Low to High</option>
+                  <option value="price-high-low">Price: High to Low</option>
+                  <option value="name-a-z">Name: A to Z</option>
+                  <option value="name-z-a">Name: Z to A</option>
+                </select>
+              </div>
+            </div>
 
-                <div className="filter-controls">
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            <div className="filter-row">
+              <div className="filter-left">
+                <span className="filter-title">Filter</span>
               </div>
 
-              <div className="store-grid">
-                {filteredProducts.map((product) => (
-                  <div key={product.id} className="store-card">
-                    <div className="store-image-wrap">
-                      <img
-                        src={product.image_url || placeholderImage}
-                        alt={product.name}
-                        className="store-image"
-                        onError={(e) => {
-                          e.target.src = placeholderImage;
-                        }}
-                      />
+              <div className="filter-controls">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="store-grid">
+              {filteredProducts.map((product) => (
+                <div key={product.id} className="store-card">
+                  <div className="store-image-wrap">
+                    <img
+                      src={product.image_url || placeholderImage}
+                      alt={product.name}
+                      className="store-image"
+                      onError={(e) => {
+                        e.target.src = placeholderImage;
+                      }}
+                    />
+                  </div>
+
+                  <div className="store-info">
+                    <h3>{product.name}</h3>
+
+                    <p className="store-description">
+                      {product.description}
+                    </p>
+
+                    <div className="store-meta">
+                      <p>{product.category}</p>
+                      <p>Stock: {product.stock}</p>
                     </div>
 
-                    <div className="store-info">
-                      <h3>{product.name}</h3>
-
-                      <p className="store-description">
-                        {product.description}
-                      </p>
-
-                      <div className="store-meta">
-                        <p>{product.category}</p>
-                        <p>Stock: {product.stock}</p>
+                    <div className="store-bottom">
+                      <div className="store-price">
+                        ${Number(product.price).toFixed(2)}
                       </div>
 
-                      <div className="store-bottom">
-                        <div className="store-price">
-                          ${Number(product.price).toFixed(2)}
-                        </div>
-
-                        <button
-                          className="store-add-btn"
-                          onClick={() => addToCart(product.id)}
-                        >
-                          Add to Cart
-                        </button>
-                      </div>
+                      <button
+                        className="store-add-btn"
+                        onClick={() => addToCart(product.id)}
+                      >
+                        Add to Cart
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </section>
+                </div>
+              ))}
+            </div>
+          </section>
 
-            <CartSidebar
-              cartItems={cartItems}
-              productMap={productMap}
-              totalPrice={totalPrice}
-              onUpdateQuantity={updateCartQuantity}
-              onRemoveCartItem={removeFromCart}
-              onOrder={handleOrder}
-            />
-          </main>
-        ))}
+          <CartSidebar
+            cartItems={cartItems}
+            productMap={productMap}
+            totalPrice={totalPrice}
+            onUpdateQuantity={updateCartQuantity}
+            onRemoveCartItem={removeFromCart}
+            onOrder={handleOrder}
+          />
+        </main>
+      )}
     </div>
   );
 }
