@@ -24,7 +24,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOption, setSortOption] = useState("default");
   const [toast, setToast] = useState(null);
-  const [view, setView] = useState("shop");
+  const [isAdminView, setIsAdminView] = useState(false);
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
@@ -223,6 +223,13 @@ function App() {
                 <span onClick={handleLogout}>Logout</span>
               </>
             )}
+
+            <button
+              className="admin-panel-btn"
+              onClick={() => setIsAdminView(!isAdminView)}
+            >
+              {isAdminView ? "Back to Store" : "Admin Panel"}
+            </button>
           </nav>
         </div>
       </header>
@@ -254,7 +261,10 @@ function App() {
             <AdminCart showToast={showToast} />
           </main>
         ) : (
-          <main className="shop-layout">
+          {isAdminView ? (
+       <ProductManagement />
+      ) : (
+      <main className="shop-layout">
             <section className="catalog-section">
               <div className="catalog-header">
                 <div className="catalog-left">
