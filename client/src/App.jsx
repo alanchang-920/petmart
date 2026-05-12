@@ -3,6 +3,7 @@ import api from "./services/api";
 import "./App.css";
 import CartService from "./services/cartService";
 import CartSidebar from "./components/CartSidebar";
+import ProductManagement from "./pages/ProductManagement";
 import AdminCart from "./components/AdminCart";
 
 const placeholderImage = "/images/placeholder.jpg";
@@ -16,7 +17,7 @@ function App() {
   const [sortOption, setSortOption] = useState("default");
   const [toast, setToast] = useState(null);
   const [view, setView] = useState("shop");
-
+  const [adminTab, setAdminTab] = useState("products");
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
 
@@ -154,9 +155,28 @@ const addToCart = (productId) => {
 
       {view === "admin" ? (
         <main className="admin-layout">
-          <AdminCart showToast={showToast} />
-        </main>
-      ) : (
+          <div className="admin-tabs">
+             <button
+             className={adminTab === "products" ? "admin-tab active" : "admin-tab"}
+             onClick={() => setAdminTab("products")}
+             >
+              Product Management
+              </button>
+              
+              <button
+               className={adminTab === "cart" ? "admin-tab active" : "admin-tab"}
+               onClick={() => setAdminTab("cart")}
+               >
+                Admin Cart
+                </button>
+                </div>
+                {adminTab === "products" ? (
+                  <ProductManagement />
+                ) : (
+                <AdminCart showToast={showToast} />
+                )}
+                </main>
+                ) : (
       <main className="shop-layout">
         <section className="catalog-section">
           <div className="catalog-header">
@@ -261,7 +281,7 @@ const addToCart = (productId) => {
           onOrder={handleOrder}
         />
       </main>
-      )}
+    )}
     </div>
   );
 }
