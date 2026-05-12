@@ -90,9 +90,27 @@
         return cartItem ? cartItem.quantity : 0;
     }
 
-    sendOrder() {
-        this.api.post("/orders/", { cart: this.cartItems })
-            .then(response => {
+    sendOrder(shipping = {}) {
+        if (this.cartItems.length === 0) {
+            this.showToast("Your cart is empty", "error");
+            return;
+        }
+        if (!shipping.recipient_name || !shipping.phone || !shipping.shipping_address) {
+            this.showToast("Please fill in name, phone and address", "error");
+            return;
+        }
+        const payload = {
+            items: this.cartItems.map(item => ({
+                product_id: item.product_id,
+                quantity: item.quantity,
+            })),
+            recipient_name: shipping.recipient_name,
+            phone: shipping.phone,
+            shipping_address: shipping.shipping_address,
+            note: shipping.note || null,
+        };
+        this.api.post("/cart/", payload)
+            .then(() => {
                 this.showToast("Order placed successfully!", "success");
                 this.clearCart();
             })

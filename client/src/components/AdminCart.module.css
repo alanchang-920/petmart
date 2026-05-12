@@ -1,0 +1,213 @@
+.adminCartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.adminCartHeader h1 {
+  margin: 0;
+}
+
+.adminRefreshBtn,
+.adminPageBtn {
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.adminRefreshBtn:disabled,
+.adminPageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adminTableWrap {
+  overflow-x: auto;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.adminTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.adminTable th,
+.adminTable td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: top;
+}
+
+.adminTable thead th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #555;
+}
+
+.adminTable tbody tr:hover {
+  background: #fcfcfc;
+}
+
+.adminEmpty {
+  text-align: center;
+  color: #888;
+  padding: 28px 16px;
+}
+
+.adminItemList {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.adminStatusSelect {
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.adminDeleteBtn {
+  border: 1px solid #e0b4b4;
+  background: #fff5f5;
+  color: #c0392b;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.adminDeleteBtn:hover {
+  background: #fdecec;
+}
+
+.adminPagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.adminPageInfo {
+  font-size: 14px;
+  color: #555;
+}
+
+.adminItemsDetails > summary {
+  cursor: pointer;
+  color: #2c6cb0;
+  font-size: 13px;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.adminItemsDetails > summary:hover {
+  text-decoration: underline;
+}
+
+.adminItemsDetails[open] > summary {
+  margin-bottom: 6px;
+}
+
+.adminItemsDetails .adminItemList {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.adminActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adminEditBtn,
+.adminSaveBtn,
+.adminCancelBtn {
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+}
+
+.adminEditBtn {
+  border-color: #b4cbe0;
+  background: #f5f9ff;
+  color: #2c6cb0;
+}
+
+.adminEditBtn:hover {
+  background: #ecf4fd;
+}
+
+.adminSaveBtn {
+  border-color: #b4d8b8;
+  background: #f3fbf4;
+  color: #2e7d32;
+}
+
+.adminSaveBtn:hover {
+  background: #ecf8ee;
+}
+
+.adminEditBtn:disabled,
+.adminSaveBtn:disabled,
+.adminCancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adminStatusBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  text-transform: capitalize;
+  background: #eee;
+  color: #555;
+}
+
+.statusPending {
+  background: #fff4d6;
+  color: #8a6d00;
+}
+
+.statusActive {
+  background: #dbeeff;
+  color: #1e5a8a;
+}
+
+.statusCompleted {
+  background: #ddf6e0;
+  color: #2e7d32;
+}
+
+.statusCancelled {
+  background: #fde2e2;
+  color: #b3261e;
+}
+
+/* Shipping cell */
+.adminShipping {
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 220px;
+}
+
+.adminShippingAddr {
+  color: #444;
+}
+
+.adminShippingNote {
+  color: #888;
+  font-style: italic;
+}

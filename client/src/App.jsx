@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "./services/api";
 import { loginUser, getCurrentUser } from "./services/userService";
 import storage from "./utils/storage";
 import "./App.css";
 import CartService from "./services/cartService";
 import CartSidebar from "./components/CartSidebar";
+import AdminCart from "./components/AdminCart";
 
 const placeholderImage = "/images/placeholder.jpg";
 
@@ -23,8 +24,9 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOption, setSortOption] = useState("default");
   const [toast, setToast] = useState(null);
+  const [view, setView] = useState("shop");
 
-  const showToast = (message, type = "success") => {
+  const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
 
     setTimeout(() => {
@@ -55,7 +57,7 @@ function App() {
   setCurrentUser(null);
   setPage("home");
   showToast("Logged out");
-};
+}, []);
 
 const cartService = new CartService(api, showToast, setCartItems , setProducts);
   useEffect(() => {
@@ -111,8 +113,8 @@ const removeFromCart = (productId) => {
     cartService.removeCartItem(productId, products);
   }
 
-const handleOrder = () => {
-    cartService.sendOrder();
+const handleOrder = (shipping) => {
+    cartService.sendOrder(shipping);
   }
 
 const addToCart = (productId) => {
@@ -186,9 +188,18 @@ const addToCart = (productId) => {
         <div className="topbar-inner">
           <div className="brand">PetMart</div>
           <nav className="nav-links">
-            <span onClick={() => setPage("home")}>Home</span>
-            <span onClick={() => setPage("home")}>Products</span>
-            <span>Cart</span>
+            <span onClick={() => setPage("home")}
+              className={view === "shop" ? "nav-active" : ""}
+              onClick={() => setView("shop")}
+            >
+              Shop
+            </span>
+            <span onClick={() => setPage("home")}
+              className={view === "admin" ? "nav-active" : ""}
+              onClick={() => setView("admin")}
+            >
+              Admin
+            </span>
 
             {!currentUser ? (
               <span onClick={() => setPage("login")}>Login</span>
@@ -224,6 +235,11 @@ const addToCart = (productId) => {
       )}
 
       {page === "home" && (
+      {view === "admin" ? (
+        <main className="admin-layout">
+          <AdminCart showToast={showToast} />
+        </main>
+      ) : (
       <main className="shop-layout">
         <section className="catalog-section">
           <div className="catalog-header">
@@ -328,6 +344,7 @@ const addToCart = (productId) => {
           onOrder={handleOrder}
         />
       </main>
+      )}
       )}
     </div>
   );
