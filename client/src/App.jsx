@@ -209,6 +209,7 @@ function App() {
               onClick={() => {
                 setPage("home");
                 setView("shop");
+                fetchProducts();
               }}
             >
               Shop
