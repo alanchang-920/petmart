@@ -9,14 +9,14 @@ import AdminCart from "./components/AdminCart";
 
 const placeholderImage = "/images/placeholder.jpg";
 
-
 function App() {
-// Add more attributes to the user
+  // Add more attributes to the user
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [currentUser, setCurrentUser] = useState(storage.getUser());
-// homepage, product listing, cart
-  const [page, setPage] = useState("home"); 
+
+  // homepage, product listing, cart
+  const [page, setPage] = useState("home");
 
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState([]);
@@ -32,9 +32,46 @@ function App() {
     setTimeout(() => {
       setToast(null);
     }, 2000);
-  };
+  }, []);
 
-// Added User's login and fetching current user details
+  const cartService = useMemo(() => {
+    return new CartService(api, showToast, setCartItems, setProducts);
+  }, [showToast]);
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await api.get("/products/");
+      setProducts(cartService.getCurrentProducts(response.data));
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+      showToast("Failed to load products", "error");
+    }
+  }, [cartService, showToast]);
+
+  useEffect(() => {
+    cartService.getAllCartItems();
+    fetchProducts();
+  }, [cartService, fetchProducts]);
+
+  // Check for existing token and fetch user details on app load
+  useEffect(() => {
+    const initUser = async () => {
+      const token = storage.getToken();
+      if (!token) return;
+
+      try {
+        const me = await getCurrentUser();
+        setCurrentUser(me);
+      } catch (err) {
+        console.error("Token invalid", err);
+        storage.logout();
+      }
+    };
+
+    initUser();
+  }, []);
+
+  // Added User's login and fetching current user details
   const handleLogin = async () => {
     try {
       const data = await loginUser(username, password);
@@ -43,89 +80,58 @@ function App() {
       const me = await getCurrentUser();
       setCurrentUser(me);
 
-      setPage("home"); 
-
+      setPage("home");
       showToast("Login successful");
     } catch (err) {
       console.error(err);
       showToast("Login failed", "error");
     }
   };
-// Added logout functionality
-  const handleLogout = () => {
-  storage.logout();
-  setCurrentUser(null);
-  setPage("home");
-  showToast("Logged out");
-}, []);
 
-const cartService = new CartService(api, showToast, setCartItems , setProducts);
-  useEffect(() => {
-    cartService.getAllCartItems();
-    fetchProducts();
-  }, []);
+  // Added logout functionality
+  const handleLogout = useCallback(() => {
+    storage.logout();
+    setCurrentUser(null);
+    setPage("home");
+    setView("shop");
+    showToast("Logged out");
+  }, [showToast]);
 
-  // Check for existing token and fetch user details on app load
-  useEffect(() => {
-  const initUser = async () => {
-    const token = storage.getToken();
-    if (!token) return;
-
-    try {
-      const me = await getCurrentUser();
-      setCurrentUser(me);
-    } catch (err) {
-      console.error("Token invalid");
-      storage.logout();
-    }
-  };
-
-  initUser();
-}, []);
-
-
-  const fetchProducts = async () => {
-    try {
-      const response = await api.get("/products/");
-      setProducts(cartService.getCurrentProducts(response.data));
-    } catch (error) {
-      console.error("Failed to fetch products:", error);
-      showToast("Failed to load products", "error");
-    }
-  };
-
-const updateCartQuantity = (productId, newQuantity) => {
+  const updateCartQuantity = (productId, newQuantity) => {
     if (cartService.getCurrentQuantityInCart(productId) < 1) {
-     // cartService.removeCartItem(productId);
       cartService.removeCartItem(productId, products);
     } else {
-      if (newQuantity > products.find(p => p.id === productId)?.stock && newQuantity > 0) {
+      const product = products.find((p) => p.id === productId);
+
+      if (newQuantity > product?.stock && newQuantity > 0) {
         showToast("Not enough stock available", "error");
       } else {
-        products.find(p => p.id === productId).stock -= newQuantity; 
+        if (product) {
+          product.stock -= newQuantity;
+        }
         cartService.updateCartQuantity(productId, newQuantity);
-
       }
     }
-  }
-  
-const removeFromCart = (productId) => {
+  };
+
+  const removeFromCart = (productId) => {
     cartService.removeCartItem(productId, products);
-  }
+  };
 
-const handleOrder = (shipping) => {
+  const handleOrder = (shipping) => {
     cartService.sendOrder(shipping);
-  }
+  };
 
-const addToCart = (productId) => {
-    const product = products.find(p => p.id === productId);
-    if (product.stock < 1) {
+  const addToCart = (productId) => {
+    const product = products.find((p) => p.id === productId);
+
+    if (!product || product.stock < 1) {
       showToast("Out of stock", "error");
     } else {
-      product.stock -= 1; 
+      product.stock -= 1;
       cartService.addToCart(productId);
     }
-  }
+  };
 
   const productMap = useMemo(() => {
     const map = {};
@@ -187,16 +193,24 @@ const addToCart = (productId) => {
       <header className="topbar">
         <div className="topbar-inner">
           <div className="brand">PetMart</div>
+
           <nav className="nav-links">
-            <span onClick={() => setPage("home")}
+            <span
               className={view === "shop" ? "nav-active" : ""}
-              onClick={() => setView("shop")}
+              onClick={() => {
+                setPage("home");
+                setView("shop");
+              }}
             >
               Shop
             </span>
-            <span onClick={() => setPage("home")}
+
+            <span
               className={view === "admin" ? "nav-active" : ""}
-              onClick={() => setView("admin")}
+              onClick={() => {
+                setPage("home");
+                setView("admin");
+              }}
             >
               Admin
             </span>
@@ -234,118 +248,119 @@ const addToCart = (productId) => {
         </div>
       )}
 
-      {page === "home" && (
-      {view === "admin" ? (
-        <main className="admin-layout">
-          <AdminCart showToast={showToast} />
-        </main>
-      ) : (
-      <main className="shop-layout">
-        <section className="catalog-section">
-          <div className="catalog-header">
-            <div className="catalog-left">
-              <p className="breadcrumb">Home / Products</p>
-              <h1>Products</h1>
-              <p className="catalog-subtitle">
-                Discover pet essentials your companions will love.
-              </p>
-            </div>
-
-            <div className="catalog-right">
-              <label htmlFor="sort">Sort by</label>
-              <select
-                id="sort"
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
-              >
-                <option value="default">Featured</option>
-                <option value="price-low-high">Price: Low to High</option>
-                <option value="price-high-low">Price: High to Low</option>
-                <option value="name-a-z">Name: A to Z</option>
-                <option value="name-z-a">Name: Z to A</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="filter-row">
-            <div className="filter-left">
-              <span className="filter-title">Filter</span>
-            </div>
-
-            <div className="filter-controls">
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="store-grid">
-            {filteredProducts.map((product) => (
-              <div key={product.id} className="store-card">
-                <div className="store-image-wrap">
-                  <img
-                    src={product.image_url || placeholderImage}
-                    alt={product.name}
-                    className="store-image"
-                    onError={(e) => {
-                      e.target.src = placeholderImage;
-                    }}
-                  />
+      {page === "home" &&
+        (view === "admin" ? (
+          <main className="admin-layout">
+            <AdminCart showToast={showToast} />
+          </main>
+        ) : (
+          <main className="shop-layout">
+            <section className="catalog-section">
+              <div className="catalog-header">
+                <div className="catalog-left">
+                  <p className="breadcrumb">Home / Products</p>
+                  <h1>Products</h1>
+                  <p className="catalog-subtitle">
+                    Discover pet essentials your companions will love.
+                  </p>
                 </div>
 
-                <div className="store-info">
-                  <h3>{product.name}</h3>
-
-                  <p className="store-description">{product.description}</p>
-
-                  <div className="store-meta">
-                    <p>{product.category}</p>
-                    <p>Stock: {product.stock}</p>
-                  </div>
-
-                  <div className="store-bottom">
-                    <div className="store-price">
-                      ${Number(product.price).toFixed(2)}
-                    </div>
-
-                    <button
-                      className="store-add-btn"
-                      onClick={() => addToCart(product.id)}
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
+                <div className="catalog-right">
+                  <label htmlFor="sort">Sort by</label>
+                  <select
+                    id="sort"
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
+                  >
+                    <option value="default">Featured</option>
+                    <option value="price-low-high">Price: Low to High</option>
+                    <option value="price-high-low">Price: High to Low</option>
+                    <option value="name-a-z">Name: A to Z</option>
+                    <option value="name-z-a">Name: Z to A</option>
+                  </select>
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
 
-        <CartSidebar
-          cartItems={cartItems}
-          productMap={productMap}
-          totalPrice={totalPrice}
-          onUpdateQuantity={updateCartQuantity}
-          onRemoveCartItem={removeFromCart}
-          onOrder={handleOrder}
-        />
-      </main>
-      )}
-      )}
+              <div className="filter-row">
+                <div className="filter-left">
+                  <span className="filter-title">Filter</span>
+                </div>
+
+                <div className="filter-controls">
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="store-grid">
+                {filteredProducts.map((product) => (
+                  <div key={product.id} className="store-card">
+                    <div className="store-image-wrap">
+                      <img
+                        src={product.image_url || placeholderImage}
+                        alt={product.name}
+                        className="store-image"
+                        onError={(e) => {
+                          e.target.src = placeholderImage;
+                        }}
+                      />
+                    </div>
+
+                    <div className="store-info">
+                      <h3>{product.name}</h3>
+
+                      <p className="store-description">
+                        {product.description}
+                      </p>
+
+                      <div className="store-meta">
+                        <p>{product.category}</p>
+                        <p>Stock: {product.stock}</p>
+                      </div>
+
+                      <div className="store-bottom">
+                        <div className="store-price">
+                          ${Number(product.price).toFixed(2)}
+                        </div>
+
+                        <button
+                          className="store-add-btn"
+                          onClick={() => addToCart(product.id)}
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <CartSidebar
+              cartItems={cartItems}
+              productMap={productMap}
+              totalPrice={totalPrice}
+              onUpdateQuantity={updateCartQuantity}
+              onRemoveCartItem={removeFromCart}
+              onOrder={handleOrder}
+            />
+          </main>
+        ))}
     </div>
   );
 }
