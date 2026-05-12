@@ -23,8 +23,8 @@ def get_cart(cart_id: int, db: Session = Depends(get_db)):
     return cart_service.get_cart(cart_id, db)
 
 @router.post("/", response_model=schemas.CartUpdateOut)
-def add_to_cart(items: list[schemas.CartItemCreate], db: Session = Depends(get_db)):
-    return cart_service.add_to_cart(items, db)
+def add_to_cart(payload: schemas.CartCreateRequest, db: Session = Depends(get_db)):
+    return cart_service.add_to_cart(payload, db)
 
 @router.put("/{cart_id}", response_model=schemas.CartUpdateOut)
 def update_cart(cart_id: int, cart: schemas.CartUpdate, db: Session = Depends(get_db)):
