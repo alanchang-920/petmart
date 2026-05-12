@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "./services/api";
-import { loginUser, getCurrentUser } from "./services/userService";
+import { loginUser, registerUser, getCurrentUser } from "./services/userService";
 import storage from "./utils/storage";
 import "./App.css";
 import CartService from "./services/cartService";
 import CartSidebar from "./components/CartSidebar";
 import AdminCart from "./components/AdminCart";
-import ProductManagement from "./components/ProductManagement";
+import ProductManagement from "./pages/ProductManagement";
+
 
 const placeholderImage = "/images/placeholder.jpg";
 
@@ -24,6 +25,9 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOption, setSortOption] = useState("default");
   const [toast, setToast] = useState(null);
+
+  const [authMode, setAuthMode] = useState("login");
+  const [email, setEmail] = useState("");
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
@@ -80,6 +84,20 @@ function App() {
     } catch (err) {
       console.error(err);
       showToast("Login failed", "error");
+    }
+  };
+
+  const handleRegister = async () => {
+    try {
+      await registerUser(username, email, password);
+
+      showToast("Register successful, please login");
+      setAuthMode("login");
+      setEmail("");
+      setPassword("");
+    } catch (err) {
+      console.error(err);
+      showToast("Register failed", "error");
     }
   };
 
@@ -230,26 +248,52 @@ function App() {
         </div>
       </header>
 
-      {page === "login" && (
-        <div className="auth-page" style={{ padding: "20px" }}>
-          <h2>Login</h2>
+    {page === "login" && (
+      <div className="auth-page" style={{ padding: "20px" }}>
+        <h2>{authMode === "login" ? "Login" : "Register"}</h2>
 
+        <input
+          placeholder="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+
+        {authMode === "register" && (
           <input
-            placeholder="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
+        )}
 
-          <input
-            placeholder="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+        <input
+          placeholder="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
+        {authMode === "login" ? (
           <button onClick={handleLogin}>Login</button>
-        </div>
-      )}
+        ) : (
+          <button onClick={handleRegister}>Register</button>
+        )}
+
+        <p>
+          {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
+
+          <button
+            type="button"
+            onClick={() =>
+              setAuthMode(authMode === "login" ? "register" : "login")
+            }
+          >
+            {authMode === "login" ? "Register" : "Login"}
+          </button>
+        </p>
+      </div>
+    )}
 
       {page === "home" && view === "cart-admin" && (
         <main className="admin-layout">

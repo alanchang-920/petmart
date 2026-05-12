@@ -31,6 +31,27 @@ export async function loginUser(username, password) {
   return response.json();
 }
 
+export async function registerUser(username, email, password) {
+  const response = await fetch(`${API_BASE}/users/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      username,
+      email,
+      password,
+      role: "user",
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Register failed");
+  }
+
+  return response.json();
+}
+
 export async function getCurrentUser() {
   const response = await fetch(`${API_BASE}/users/me`, {
     method: "GET",
