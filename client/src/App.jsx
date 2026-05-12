@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "./services/api";
 import "./App.css";
 import CartService from "./services/cartService";
 import CartSidebar from "./components/CartSidebar";
 import ProductManagement from "./pages/ProductManagement";
+import AdminCart from "./components/AdminCart";
 
 const placeholderImage = "/images/placeholder.jpg";
 
@@ -15,15 +16,15 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOption, setSortOption] = useState("default");
   const [toast, setToast] = useState(null);
-  const [isAdminView, setIsAdminView] = useState(false);
-
-  const showToast = (message, type = "success") => {
+  const [view, setView] = useState("shop");
+  const [adminTab, setAdminTab] = useState("products");
+  const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
 
     setTimeout(() => {
       setToast(null);
     }, 2000);
-  };
+  }, []);
 
 const cartService = new CartService(api, showToast, setCartItems , setProducts);
   useEffect(() => {
@@ -61,8 +62,8 @@ const removeFromCart = (productId) => {
     cartService.removeCartItem(productId, products);
   }
 
-const handleOrder = () => {
-    cartService.sendOrder();
+const handleOrder = (shipping) => {
+    cartService.sendOrder(shipping);
   }
 
 const addToCart = (productId) => {
@@ -136,23 +137,46 @@ const addToCart = (productId) => {
         <div className="topbar-inner">
           <div className="brand">PetMart</div>
           <nav className="nav-links">
-            <span>Home</span>
-            <span>Products</span>
-            <span>Cart</span>
-
-            <button
-              className="admin-panel-btn"
-              onClick={() => setIsAdminView(!isAdminView)}
+            <span
+              className={view === "shop" ? "nav-active" : ""}
+              onClick={() => setView("shop")}
             >
-              {isAdminView ? "Back to Store" : "Admin Panel"}
-            </button>
+              Shop
+            </span>
+            <span
+              className={view === "admin" ? "nav-active" : ""}
+              onClick={() => setView("admin")}
+            >
+              Admin
+            </span>
           </nav>
         </div>
       </header>
 
-      {isAdminView ? (
-       <ProductManagement />
-      ) : (
+      {view === "admin" ? (
+        <main className="admin-layout">
+          <div className="admin-tabs">
+             <button
+             className={adminTab === "products" ? "admin-tab active" : "admin-tab"}
+             onClick={() => setAdminTab("products")}
+             >
+              Product Management
+              </button>
+              
+              <button
+               className={adminTab === "cart" ? "admin-tab active" : "admin-tab"}
+               onClick={() => setAdminTab("cart")}
+               >
+                Admin Cart
+                </button>
+                </div>
+                {adminTab === "products" ? (
+                  <ProductManagement />
+                ) : (
+                <AdminCart showToast={showToast} />
+                )}
+                </main>
+                ) : (
       <main className="shop-layout">
         <section className="catalog-section">
           <div className="catalog-header">

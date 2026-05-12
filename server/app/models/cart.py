@@ -10,6 +10,10 @@ class Cart(Base):
     total_price = Column(DECIMAL(10, 2), nullable=False, default=0.00)
     user_id = Column(Integer, nullable=True)  # Optional: link to a user if you have authentication
     status = Column(String(20), default="pending")  # e.g., active, completed, cancelled
+    recipient_name = Column(String(100), nullable=True)
+    phone = Column(String(20), nullable=True)
+    shipping_address = Column(Text, nullable=True)
+    note = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
