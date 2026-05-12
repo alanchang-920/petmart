@@ -214,25 +214,29 @@ function App() {
               Shop
             </span>
 
-            <span
-              className={view === "product-admin" ? "nav-active" : ""}
-              onClick={() => {
-                setPage("home");
-                setView("product-admin");
-              }}
-            >
-              Product Admin
-            </span>
+            {currentUser?.role === "admin" && (
+              <>
+                <span
+                  className={view === "product-admin" ? "nav-active" : ""}
+                  onClick={() => {
+                    setPage("home");
+                    setView("product-admin");
+                  }}
+                >
+                  Product Admin
+                </span>
 
-            <span
-              className={view === "cart-admin" ? "nav-active" : ""}
-              onClick={() => {
-                setPage("home");
-                setView("cart-admin");
-              }}
-            >
-              Admin Cart
-            </span>
+                <span
+                  className={view === "cart-admin" ? "nav-active" : ""}
+                  onClick={() => {
+                    setPage("home");
+                    setView("cart-admin");
+                  }}
+                >
+                  Admin Cart
+                </span>
+              </>
+            )}
 
             {!currentUser ? (
               <span onClick={() => setPage("login")}>Login</span>
