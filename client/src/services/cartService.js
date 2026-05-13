@@ -29,7 +29,17 @@
       quantity: 1,
     });
     }
-      this.showToast("Added to cart!", "success");
+
+    // Decrement displayed product stock by 1
+    this.currentProducts = this.currentProducts.map(product => {
+      if (product.id === productId) {
+        return { ...product, stock: product.stock - 1 };
+      }
+      return product;
+    });
+    this.setProducts(this.currentProducts);
+
+    this.showToast("Added to cart!", "success");
     this.updateAndPersistCart();
   };
 
@@ -51,14 +61,27 @@
   };
 
    updateCartQuantity(productId, newQuantity) {
+    const oldQuantity = this.cartItems.find(item => item.product_id === productId)?.quantity || 0;
+    const delta = oldQuantity - newQuantity; // positive = stock increases, negative = stock decreases
+
     this.cartItems = this.cartItems.map(item => {
       if (item.product_id === productId) {
-        return { ...item, quantity: item.quantity + newQuantity };
+        return { ...item, quantity: newQuantity };
       }
       return item;
     });
-      this.showToast("Cart updated!", "success");
-      this.updateAndPersistCart();
+
+    // Update displayed product stock
+    this.currentProducts = this.currentProducts.map(product => {
+      if (product.id === productId) {
+        return { ...product, stock: product.stock + delta };
+      }
+      return product;
+    });
+    this.setProducts(this.currentProducts);
+
+    this.showToast("Cart updated!", "success");
+    this.updateAndPersistCart();
   }
 
     getAllCartItems() {

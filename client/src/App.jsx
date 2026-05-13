@@ -114,8 +114,10 @@ function App() {
     }
 
     const product = products.find((p) => p.id === productId);
+    const currentItem = cartItems.find((i) => i.product_id === productId);
+    const increase = newQuantity - (currentItem?.quantity || 0);
 
-    if (newQuantity > product?.stock) {
+    if (increase > 0 && increase > product?.stock) {
       showToast("Not enough stock available", "error");
       return;
     }

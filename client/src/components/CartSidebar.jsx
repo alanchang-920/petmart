@@ -61,7 +61,7 @@ function CartSidebar({ cartItems, productMap, totalPrice, onUpdateQuantity, onRe
                     <div className={styles.miniQtyControls}>
                       <button
                         className={styles.miniQtyBtn}
-                        onClick={() => onUpdateQuantity(item.product_id, -1)}
+                        onClick={() => onUpdateQuantity(item.product_id, item.quantity - 1)}
                       >
                         -
                       </button>
@@ -70,7 +70,7 @@ function CartSidebar({ cartItems, productMap, totalPrice, onUpdateQuantity, onRe
 
                       <button
                         className={styles.miniQtyBtn}
-                        onClick={() => onUpdateQuantity(item.product_id, 1)}
+                        onClick={() => onUpdateQuantity(item.product_id, item.quantity + 1)}
                       >
                         +
                       </button>
