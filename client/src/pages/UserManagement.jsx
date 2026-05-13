@@ -131,6 +131,14 @@ function UserManagement() {
   };
 
   const handleDelete = async (userId) => {
+    const user = users.find(u => u.id === userId);
+    
+    // Prevent deletion of admin users
+    if (user?.role === "admin") {
+      setError("Cannot delete admin users");
+      return;
+    }
+
     const confirmed = window.confirm("Are you sure you want to delete this user?");
     if (!confirmed) return;
 
@@ -305,7 +313,12 @@ function UserManagement() {
                     <button className={styles["btn-edit"]} onClick={() => startEdit(user)}>
                       Edit
                     </button>
-                    <button className={styles["btn-delete"]} onClick={() => handleDelete(user.id)}>
+                    <button 
+                      className={styles["btn-delete"]} 
+                      onClick={() => handleDelete(user.id)}
+                      disabled={user.role === "admin"}
+                      title={user.role === "admin" ? "Cannot delete admin users" : ""}
+                    >
                       Delete
                     </button>
                   </>
