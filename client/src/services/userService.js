@@ -92,6 +92,20 @@ export async function updateUser(userId, userData) {
   return response.json();
 }
 
+export async function createUser(userData) {
+  const response = await fetch(`${API_BASE}/users/`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(userData),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create user");
+  }
+
+  return response.json();
+}
+
 export async function deleteUser(userId) {
   const response = await fetch(`${API_BASE}/users/${userId}`, {
     method: "DELETE",

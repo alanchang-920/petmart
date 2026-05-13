@@ -44,7 +44,40 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-@router.post("/login")
+@router.post("/", response_model=schemas.UserOut)
+def create_user_admin(
+    user: schemas.AdminCreate,
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(require_admin)
+):
+    """Admin endpoint to create new users with specified role"""
+    # Check if username already exists
+    existing_user = db.query(models.User).filter(
+        models.User.username == user.username
+    ).first()
+    
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    # Check if email already exists
+    existing_email = db.query(models.User).filter(
+        models.User.email == user.email
+    ).first()
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Create new user
+    new_user = models.User(
+        username=user.username,
+        email=user.email,
+        password_hash=hash_password(user.password),
+        role=user.role
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)

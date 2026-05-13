@@ -7,6 +7,7 @@ import CartService from "./services/cartService";
 import CartSidebar from "./components/CartSidebar";
 import AdminCart from "./components/AdminCart";
 import ProductManagement from "./pages/ProductManagement";
+import UserManagement from "./pages/UserManagement";
 
 const placeholderImage = "/images/placeholder.jpg";
 
@@ -238,6 +239,16 @@ function App() {
                 >
                   Admin Cart
                 </span>
+
+                <span
+                  className={view === "user-admin" ? "nav-active" : ""}
+                  onClick={() => {
+                    setPage("home");
+                    setView("user-admin");
+                  }}
+                >
+                  User Admin
+                </span>
               </>
             )}
 
@@ -311,6 +322,12 @@ function App() {
       {page === "home" && view === "cart-admin" && (
         <main className="admin-layout">
           <AdminCart showToast={showToast} />
+        </main>
+      )}
+
+      {page === "home" && view === "user-admin" && (
+        <main className="admin-layout">
+          <UserManagement />
         </main>
       )}
 
