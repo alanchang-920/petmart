@@ -78,6 +78,8 @@ def create_user_admin(
     db.commit()
     db.refresh(new_user)
     return new_user
+
+@router.post("/login")
 def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
