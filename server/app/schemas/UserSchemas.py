@@ -5,6 +5,13 @@ class UserCreate(BaseModel):
     email: str
     password: str
 
+class AdminCreate(BaseModel):
+    """Schema for admin creating new users"""
+    username: str
+    email: str
+    password: str
+    role: str = "user"
+
 class UserLogin(BaseModel):
     username: str
     password: str
@@ -27,4 +34,5 @@ class UserOut(BaseModel):
 class AdminUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
+    password: Optional[str] = None
     role: Optional[str] = None
