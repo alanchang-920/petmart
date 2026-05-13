@@ -8,6 +8,7 @@ import CartSidebar from "./components/CartSidebar";
 import AdminCart from "./components/AdminCart";
 import ProductManagement from "./pages/ProductManagement";
 import UserManagement from "./pages/UserManagement";
+import { FaShoppingCart } from "react-icons/fa";
 
 const placeholderImage = "/images/placeholder.jpg";
 
@@ -27,6 +28,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOption, setSortOption] = useState("default");
   const [toast, setToast] = useState(null);
+  const [showCart, setShowCart] = useState(false);
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
@@ -258,6 +260,10 @@ function App() {
               <>
                 <span>{currentUser.username}</span>
                 <span onClick={handleLogout}>Logout</span>
+
+                <button className="cart-icon-btn" onClick={() => setShowCart(!showCart)}>
+                  <FaShoppingCart size={20} />
+                </button>
               </>
             )}
           </nav>
@@ -427,14 +433,16 @@ function App() {
             </div>
           </section>
 
+          {showCart && (
           <CartSidebar
-            cartItems={cartItems}
-            productMap={productMap}
-            totalPrice={totalPrice}
-            onUpdateQuantity={updateCartQuantity}
-            onRemoveCartItem={removeFromCart}
-            onOrder={handleOrder}
+          cartItems={cartItems}
+          productMap={productMap}
+          totalPrice={totalPrice}
+          onUpdateQuantity={updateCartQuantity}
+          onRemoveCartItem={removeFromCart}
+          onOrder={handleOrder}
           />
+          )}
         </main>
       )}
     </div>

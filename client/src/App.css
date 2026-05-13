@@ -643,3 +643,17 @@ body {
   gap: 12px;
   margin-top: 10px;
 }
+
+.cart-icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #0f172a;
+  transition: 0.2s;
+}
+
+.cart-icon-btn:hover {
+  transform: scale(1.1);
+}
