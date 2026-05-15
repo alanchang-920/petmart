@@ -50,9 +50,13 @@ function App() {
   }, [cartService, showToast]);
 
   useEffect(() => {
-    cartService.getAllCartItems();
     fetchProducts();
-  }, [cartService, fetchProducts]);
+    if (currentUser) {
+      cartService.getAllCartItems();
+    } else {
+      setCartItems([]);
+    }
+  }, [currentUser, cartService, fetchProducts]);
 
   useEffect(() => {
     const initUser = async () => {
@@ -78,6 +82,8 @@ function App() {
 
       const me = await getCurrentUser();
       setCurrentUser(me);
+
+      await cartService.getAllCartItems();
 
       setPage("home");
       setView("shop");
@@ -105,6 +111,8 @@ function App() {
   const handleLogout = useCallback(() => {
     storage.logout();
     setCurrentUser(null);
+    setShowCart(false);
+    setCartItems([]);
     setPage("home");
     setView("shop");
     showToast("Logged out");
@@ -433,7 +441,7 @@ function App() {
             </div>
           </section>
 
-          {showCart && (
+          {currentUser && showCart && (
           <CartSidebar
           cartItems={cartItems}
           productMap={productMap}
