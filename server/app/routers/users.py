@@ -85,11 +85,11 @@ def login_user(
     db: Session = Depends(get_db)
 ):
     db_user = db.query(models.User).filter(
-        models.User.username == form_data.username
+        models.User.email == form_data.username
     ).first()
 
     if not db_user or not verify_password(form_data.password, db_user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     token = create_access_token({
         "user_id": db_user.id,

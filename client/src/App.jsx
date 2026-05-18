@@ -74,17 +74,23 @@ function App() {
 
     initUser();
   }, []);
-
+  
+  const clearAuthForm = () => {
+    setUsername("");
+    setEmail("");
+    setPassword("");
+  };
+  
   const handleLogin = async () => {
     try {
-      const data = await loginUser(username, password);
+      const data = await loginUser(email, password);
       storage.saveAuth(data);
-
+      
       const me = await getCurrentUser();
       setCurrentUser(me);
-
+      
       await cartService.getAllCartItems();
-
+      clearAuthForm();
       setPage("home");
       setView("shop");
       showToast("Login successful");
@@ -113,6 +119,7 @@ function App() {
     setCurrentUser(null);
     setShowCart(false);
     setCartItems([]);
+    clearAuthForm();
     setPage("home");
     setView("shop");
     showToast("Logged out");
@@ -281,12 +288,23 @@ function App() {
       {page === "login" && (
         <div className="auth-page" style={{ padding: "20px" }}>
           <h2>{authMode === "login" ? "Login" : "Register"}</h2>
-
+          
+          {authMode === "login" ? (
+            <input
+            placeholder="email"
+            type="email"
+            value={email}
+            autoComplete="off"
+            onChange={(e) => setEmail(e.target.value)}
+            />
+          ) : (
           <input
-            placeholder="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+          placeholder="username"
+          value={username}
+          autoComplete="off"
+          onChange={(e) => setUsername(e.target.value)}
           />
+           )}
 
           {authMode === "register" && (
             <input
@@ -301,6 +319,7 @@ function App() {
             placeholder="password"
             type="password"
             value={password}
+            autoComplete="new-password"
             onChange={(e) => setPassword(e.target.value)}
           />
 
