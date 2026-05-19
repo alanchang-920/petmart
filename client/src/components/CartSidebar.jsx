@@ -133,28 +133,43 @@ function CartSidebar({
           {step === "shipping" && (
             <>
               <div className={styles.shippingForm}>
-                <h3>Shipping details</h3>
+                <div className={styles.shippingHeader}>
+                  <h3>Shipping details</h3>
+                  <p className={styles.shippingSubtitle}>
+                    Where should we send your order?
+                  </p>
+                </div>
 
                 <div className={styles.shippingField}>
+                  <label htmlFor="recipient_name">
+                    Recipient name <span className={styles.required}>*</span>
+                  </label>
                   <input
+                    id="recipient_name"
                     type="text"
                     name="recipient_name"
-                    placeholder="Recipient name *"
+                    placeholder="Jane Doe"
                     value={shipping.recipient_name}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     className={fieldClass("recipient_name")}
                   />
                   {fieldError("recipient_name") && (
-                    <span className={styles.fieldError}>{errors.recipient_name}</span>
+                    <span className={styles.fieldError}>
+                      {errors.recipient_name}
+                    </span>
                   )}
                 </div>
 
                 <div className={styles.shippingField}>
+                  <label htmlFor="phone">
+                    Phone <span className={styles.required}>*</span>
+                  </label>
                   <input
+                    id="phone"
                     type="tel"
                     name="phone"
-                    placeholder="Phone number *"
+                    placeholder="+61 400 000 000"
                     value={shipping.phone}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -166,9 +181,13 @@ function CartSidebar({
                 </div>
 
                 <div className={styles.shippingField}>
+                  <label htmlFor="shipping_address">
+                    Shipping address <span className={styles.required}>*</span>
+                  </label>
                   <textarea
+                    id="shipping_address"
                     name="shipping_address"
-                    placeholder="Shipping address *"
+                    placeholder="Street, suburb, postcode"
                     rows={2}
                     value={shipping.shipping_address}
                     onChange={handleChange}
@@ -176,14 +195,20 @@ function CartSidebar({
                     className={fieldClass("shipping_address")}
                   />
                   {fieldError("shipping_address") && (
-                    <span className={styles.fieldError}>{errors.shipping_address}</span>
+                    <span className={styles.fieldError}>
+                      {errors.shipping_address}
+                    </span>
                   )}
                 </div>
 
                 <div className={styles.shippingField}>
+                  <label htmlFor="note">
+                    Note <span className={styles.optional}>(optional)</span>
+                  </label>
                   <textarea
+                    id="note"
                     name="note"
-                    placeholder="Note (optional)"
+                    placeholder="Delivery instructions, gate code, etc."
                     rows={2}
                     value={shipping.note}
                     onChange={handleChange}
@@ -191,21 +216,28 @@ function CartSidebar({
                 </div>
               </div>
 
-              <div className={styles.miniCartTotal}>
-                <h3>Total: ${totalPrice.toFixed(2)}</h3>
-                <button
-                  className={styles.miniBackBtn}
-                  onClick={() => setStep("cart")}
-                >
-                  ← Back
-                </button>
-                <button
-                  className={styles.miniOrderBtn}
-                  onClick={handleSubmit}
-                  disabled={!isValid}
-                >
-                  Order
-                </button>
+              <div className={styles.shippingFooter}>
+                <div className={styles.shippingTotalRow}>
+                  <span className={styles.shippingTotalLabel}>Total</span>
+                  <span className={styles.shippingTotalValue}>
+                    ${totalPrice.toFixed(2)}
+                  </span>
+                </div>
+                <div className={styles.shippingActions}>
+                  <button
+                    className={styles.miniBackBtn}
+                    onClick={() => setStep("cart")}
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    className={styles.miniOrderBtn}
+                    onClick={handleSubmit}
+                    disabled={!isValid}
+                  >
+                    Place order
+                  </button>
+                </div>
               </div>
             </>
           )}

@@ -15,7 +15,13 @@ import CartSidebar from "../components/CartSidebar";
  * keeps a single source of truth and avoids the double-decrement that
  * happens when both sides mutate stock independently.
  */
-function HomePage({ showToast, showCart, refreshKey, onRequireLogin }) {
+function HomePage({
+  showToast,
+  showCart,
+  refreshKey,
+  onOpenCart,
+  onRequireLogin,
+}) {
   const { currentUser } = useAuth();
 
   const {
@@ -82,6 +88,8 @@ function HomePage({ showToast, showCart, refreshKey, onRequireLogin }) {
       return;
     }
     addToCart(productId);
+    // Reveal the cart so the customer sees what they just added.
+    onOpenCart?.();
   };
 
   /** Stock-aware quantity change: removes the item if newQuantity < 1. */

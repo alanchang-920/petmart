@@ -74,6 +74,7 @@ function AppShell() {
           showToast={showToast}
           showCart={showCart}
           refreshKey={shopRefreshKey}
+          onOpenCart={() => setShowCart(true)}
           onRequireLogin={() => {
             // Guest reached the checkout step — bounce them to the login form.
             // Cart state persists in localStorage, so it's still there afterwards.
