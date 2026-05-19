@@ -27,7 +27,7 @@ def login_user(
 ):
     user = (
         db.query(models.User)
-        .filter(models.User.username == form_data.username)
+        .filter(models.User.email == form_data.username)
         .first()
     )
     if not user or not verify_password(form_data.password, user.password_hash):

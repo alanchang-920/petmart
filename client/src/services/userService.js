@@ -7,9 +7,10 @@ import api from "./api";
  * so callers don't need to think about auth on a per-request basis.
  */
 
-export function loginUser(username, password) {
+export function loginUser(email, password) {
   // /users/login expects OAuth2 password form, not JSON.
-  const body = new URLSearchParams({ username, password });
+  const body = new URLSearchParams({ username: email,
+    password, });
   return api
     .post("/users/login", body, {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },

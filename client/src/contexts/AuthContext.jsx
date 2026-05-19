@@ -42,8 +42,8 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const login = useCallback(async (username, password) => {
-    const data = await loginRequest(username, password);
+  const login = useCallback(async (email, password) => {
+    const data = await loginRequest(email, password);
     storage.saveAuth(data);
     const me = await getCurrentUser();
     setCurrentUser(me);
