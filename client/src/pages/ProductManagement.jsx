@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import api from "../services/api";
+import {
+  fetchProducts as fetchProductsApi,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "../services/productService";
 
 const placeholderImage = "/images/placeholder.jpg";
 
@@ -19,8 +24,7 @@ function ProductManagement() {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get("/products/");
-      setProducts(response.data);
+      setProducts(await fetchProductsApi());
     } catch (error) {
       console.error("Failed to fetch products:", error);
     }
@@ -60,7 +64,7 @@ function ProductManagement() {
     };
 
     try {
-      await api.post("/products/", productData);
+      await createProduct(productData);
       alert("Product added successfully");
       resetForm();
       fetchProducts();
@@ -80,7 +84,7 @@ function ProductManagement() {
     };
 
     try {
-      await api.put(`/products/${editingId}`, productData);
+      await updateProduct(editingId, productData);
       alert("Product updated successfully");
       resetForm();
       fetchProducts();
@@ -113,7 +117,7 @@ function ProductManagement() {
     if (!confirmDelete) return;
 
     try {
-      await api.delete(`/products/${id}`);
+      await deleteProduct(id);
       alert("Product deleted successfully");
       fetchProducts();
     } catch (error) {

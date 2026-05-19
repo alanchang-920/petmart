@@ -1,120 +1,45 @@
-import storage from "../utils/storage";
+import api from "./api";
 
-const API_BASE = "http://127.0.0.1:8000";
+/**
+ * REST wrappers for the /users resource.
+ *
+ * The shared `api` axios instance handles base URL + JWT header injection,
+ * so callers don't need to think about auth on a per-request basis.
+ */
 
-function getAuthHeaders() {
-  const token = storage.getToken();
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
+export function loginUser(email, password) {
+  // /users/login expects OAuth2 password form, not JSON.
+  const body = new URLSearchParams({ username: email,
+    password, });
+  return api
+    .post("/users/login", body, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    })
+    .then((res) => res.data);
 }
 
-export async function loginUser(username, password) {
-  const formData = new URLSearchParams();
-  formData.append("username", username);
-  formData.append("password", password);
-
-  const response = await fetch(`${API_BASE}/users/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error("Login failed");
-  }
-
-  return response.json();
+export function registerUser(username, email, password) {
+  return api
+    .post("/users/register", { username, email, password, role: "user" })
+    .then((res) => res.data);
 }
 
-export async function registerUser(username, email, password) {
-  const response = await fetch(`${API_BASE}/users/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      username,
-      email,
-      password,
-      role: "user",
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error("Register failed");
-  }
-
-  return response.json();
+export function getCurrentUser() {
+  return api.get("/users/me").then((res) => res.data);
 }
 
-export async function getCurrentUser() {
-  const response = await fetch(`${API_BASE}/users/me`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to get current user");
-  }
-
-  return response.json();
+export function getUsers() {
+  return api.get("/users/").then((res) => res.data);
 }
 
-export async function getUsers() {
-  const response = await fetch(`${API_BASE}/users/`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to get users");
-  }
-
-  return response.json();
+export function createUser(userData) {
+  return api.post("/users/", userData).then((res) => res.data);
 }
 
-export async function updateUser(userId, userData) {
-  const response = await fetch(`${API_BASE}/users/${userId}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(userData),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to update user");
-  }
-
-  return response.json();
+export function updateUser(userId, userData) {
+  return api.put(`/users/${userId}`, userData).then((res) => res.data);
 }
 
-export async function createUser(userData) {
-  const response = await fetch(`${API_BASE}/users/`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(userData),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to create user");
-  }
-
-  return response.json();
-}
-
-export async function deleteUser(userId) {
-  const response = await fetch(`${API_BASE}/users/${userId}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to delete user");
-  }
-
-  return response.json();
+export function deleteUser(userId) {
+  return api.delete(`/users/${userId}`).then((res) => res.data);
 }

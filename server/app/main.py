@@ -1,14 +1,19 @@
+"""FastAPI application entrypoint.
+
+Wires database table creation, CORS, and the three resource routers
+(`/products`, `/cart`, `/users`).
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import products
 from .database import Base, engine
-from .routers import cart
-from .routers import users
+from .routers import cart, products, users
 
+# Auto-create tables on startup. For production we'd swap this for Alembic.
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(title="PetMart API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,8 +25,9 @@ app.add_middleware(
 
 app.include_router(products.router)
 app.include_router(cart.router)
-# The user router is included after product and cart routers.
 app.include_router(users.router)
+
+
 @app.get("/")
 def read_root():
-    return {"message": "MiniMart API is running"}
+    return {"message": "PetMart API is running"}

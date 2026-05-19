@@ -657,3 +657,42 @@ body {
 .cart-icon-btn:hover {
   transform: scale(1.1);
 }
+
+.admin-tabs {
+  display: flex;
+  gap: 0;
+  padding: 24px 40px 0;
+}
+
+.admin-tabs button {
+  border: 1px solid #d1d5db;
+  background: white;
+  padding: 12px 28px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 0;
+  margin-left: -1px;
+  transition: 0.2s ease;
+}
+
+.admin-tabs button:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  margin-left: 0;
+}
+
+.admin-tabs button:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.admin-tabs button:hover {
+  background: #f3f4f6;
+}
+
+.admin-tab-active {
+  background: #111827 !important;
+  color: white;
+  border-color: #111827 !important;
+  z-index: 1;
+}
