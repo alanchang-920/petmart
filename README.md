@@ -6,6 +6,13 @@ shipping details. Administrators can manage three resources end-to-end:
 **products**, **users**, and **carts (orders)**.
 
 This is a group submission for **31748 / 32516 Web Programming — Assignment 2**.
+## Group members
+
+| Member          | Student ID |
+| --------------- | ---------- |
+| Chia-Ming Chang | 25421850   |
+| Van Dao Le      | 25680051   |
+| Kailai Ran      | 25956727   |
 
 ---
 

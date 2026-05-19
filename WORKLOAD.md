@@ -1,17 +1,4 @@
 # Workload Allocation — PetMart (Assignment 2)
-
-> **TEMPLATE — fill in each member's name, GitHub handle, and the files /
-> features they own before submission.**
->
-> Tips for the rubric ("Allocation of Workload", 4 marks):
-> 1. Make the split explicit — list the *files* each member authored.
-> 2. Avoid relying on a single member: each person should own at least one
->    feature end-to-end (model + schema + service + router + UI page).
-> 3. Git commits should match this allocation (each member commits the files
->    listed under their name).
-
----
-
 ## Group members
 
 | Member          | Student ID |
@@ -61,6 +48,7 @@ This makes per-member ownership clean.
 - `client/src/components/CartSidebar.jsx` (+ `.module.css`)
 - `client/src/pages/AdminCart.jsx`        (+ `.module.css`)
 - `client/src/utils/shipping.js`
+- `client/src/utils/storage.js`
 
 ---
 
@@ -80,7 +68,6 @@ This makes per-member ownership clean.
 - `client/src/contexts/AuthContext.jsx`
 - `client/src/pages/LoginPage.jsx`
 - `client/src/pages/UserManagement.jsx`   (+ `.module.css`)
-- `client/src/utils/storage.js`
 
 ---
 
