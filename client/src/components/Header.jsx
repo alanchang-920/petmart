@@ -29,27 +29,17 @@ function Header({ view, onNavigate, onToggleCart, onGoLogin, onLogout }) {
           </span>
 
           {isAdmin && (
-            <>
-              <span
-                className={linkClass("product-admin")}
-                onClick={() => onNavigate("product-admin")}
-              >
-                Product Admin
-              </span>
-              <span
-                className={linkClass("cart-admin")}
-                onClick={() => onNavigate("cart-admin")}
-              >
-                Admin Cart
-              </span>
-              <span
-                className={linkClass("user-admin")}
-                onClick={() => onNavigate("user-admin")}
-              >
-                User Admin
-              </span>
-            </>
-          )}
+            <span
+            className={
+              ["product-admin", "cart-admin", "user-admin"].includes(view)
+              ? "nav-active"
+              : ""
+            }
+            onClick={() => onNavigate("user-admin")}
+          >
+            Admin
+          </span>
+       )}
 
           {!currentUser ? (
             <span onClick={onGoLogin}>Login</span>

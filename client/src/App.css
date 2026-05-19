@@ -657,3 +657,28 @@ body {
 .cart-icon-btn:hover {
   transform: scale(1.1);
 }
+
+.admin-tabs {
+  display: flex;
+  gap: 16px;
+  padding: 24px 40px 0;
+}
+
+.admin-tabs button {
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-tabs button:hover {
+  background: #f3f4f6;
+}
+
+.admin-tab-active {
+  background: #111827 !important;
+  color: white;
+  border-color: #111827 !important;
+}

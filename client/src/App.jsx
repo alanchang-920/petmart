@@ -62,9 +62,13 @@ function AppShell() {
       {page === "login" && (
         <LoginPage
           showToast={showToast}
-          onLoginSuccess={() => {
+          onLoginSuccess={(user) => {
             setPage("home");
-            setView("shop");
+            if (user?.role === "admin") {
+              setView("user-admin");
+            } else {
+              setView("shop");
+            }
           }}
         />
       )}
@@ -83,6 +87,32 @@ function AppShell() {
           }}
         />
       )}
+
+      {page === "home" &&
+        ["user-admin", "cart-admin", "product-admin"].includes(view) && (
+          <div className="admin-tabs">
+            <button
+              className={view === "user-admin" ? "admin-tab-active" : ""}
+              onClick={() => setView("user-admin")}
+            >
+              User Management
+            </button>
+
+            <button
+              className={view === "cart-admin" ? "admin-tab-active" : ""}
+              onClick={() => setView("cart-admin")}
+            >
+              Cart Management
+            </button>
+
+            <button
+              className={view === "product-admin" ? "admin-tab-active" : ""}
+              onClick={() => setView("product-admin")}
+            >
+              Product Management
+            </button>
+          </div>
+        )}
 
       {page === "home" && view === "product-admin" && (
         <main className="admin-layout">

@@ -1,4 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import storage from "../utils/storage";
 import {
   getCurrentUser,
@@ -44,7 +50,7 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const data = await loginRequest(email, password);
-    storage.saveAuth(data);
+    storage.setItem("token", data.access_token);
     const me = await getCurrentUser();
     setCurrentUser(me);
     return me;
