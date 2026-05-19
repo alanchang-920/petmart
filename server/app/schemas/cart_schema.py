@@ -1,20 +1,48 @@
 import re
-
-from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 
-from .schemas import CartItemCreate
+from pydantic import BaseModel, Field, field_validator
 
 
 PHONE_PATTERN = r"[0-9+\-\s]{8,20}"
-PHONE_FORMAT_MESSAGE = "Phone number must be 8-20 characters, digits only (spaces, + and - allowed)."
+PHONE_FORMAT_MESSAGE = (
+    "Phone number must be 8-20 characters, digits only (spaces, + and - allowed)."
+)
 
-class CartCreate(BaseModel):
-    user_id: Optional[int] = None  # Optional: link to a user if you have authentication
-    status : Optional[str] = "pending"  # e.g., active, completed, cancelled
+
+class CartItemCreate(BaseModel):
+    product_id: int
+    quantity: int
+
+
+class CartItemOut(BaseModel):
+    id: int
+    product_id: int
+    quantity: int
+
+    class Config:
+        from_attributes = True
+
+
+class CartItemDetail(BaseModel):
+    """Cart item enriched with the product name/price for display."""
+
+    id: int
+    product_id: int
+    product_name: str
+    product_price: float
+    quantity: int
+
+    class Config:
+        from_attributes = True
+
 
 class CartCreateRequest(BaseModel):
-    items: list[CartItemCreate] = Field(min_length=1, description="At least one item is required.")
+    """Payload submitted when a customer places an order."""
+
+    items: list[CartItemCreate] = Field(
+        min_length=1, description="At least one item is required."
+    )
     recipient_name: str = Field(max_length=100)
     phone: str = Field(max_length=20)
     shipping_address: str
@@ -43,8 +71,11 @@ class CartCreateRequest(BaseModel):
             raise ValueError(PHONE_FORMAT_MESSAGE)
         return phone
 
+
 class CartUpdate(BaseModel):
-    status: Optional[str] = None  # e.g., active, completed, cancelled
+    """Admin update — any combination of fields may be supplied."""
+
+    status: Optional[str] = None
     recipient_name: Optional[str] = None
     phone: Optional[str] = None
     shipping_address: Optional[str] = None
@@ -77,6 +108,7 @@ class CartUpdate(BaseModel):
             raise ValueError(PHONE_FORMAT_MESSAGE)
         return phone
 
+
 class CartUpdateOut(BaseModel):
     id: int
     user_id: Optional[int] = None
@@ -90,15 +122,6 @@ class CartUpdateOut(BaseModel):
     class Config:
         from_attributes = True
 
-class CartItemDetail(BaseModel):
-    id: int
-    product_id: int
-    product_name: str
-    product_price: float
-    quantity: int
-
-    class Config:
-        from_attributes = True
 
 class CartOut(BaseModel):
     id: int

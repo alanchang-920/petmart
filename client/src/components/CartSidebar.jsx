@@ -8,7 +8,16 @@ import styles from "./CartSidebar.module.css";
 
 const REQUIRED_FIELDS = ["recipient_name", "phone", "shipping_address"];
 
-function CartSidebar({ cartItems, productMap, totalPrice, onUpdateQuantity, onRemoveCartItem , onOrder }) {
+function CartSidebar({
+  cartItems,
+  productMap,
+  totalPrice,
+  isLoggedIn = true,
+  onUpdateQuantity,
+  onRemoveCartItem,
+  onOrder,
+  onRequireLogin,
+}) {
   const [step, setStep] = useState("cart");
   const [shipping, setShipping] = useState(EMPTY_SHIPPING);
   const [touched, setTouched] = useState({});
@@ -53,6 +62,11 @@ function CartSidebar({ cartItems, productMap, totalPrice, onUpdateQuantity, onRe
             <>
               {cartItems.map((item) => {
                 const product = productMap[item.product_id];
+                // product.stock is the raw server stock; we can take at most
+                // that many regardless of what is already in the cart.
+                const atMaxStock = product
+                  ? item.quantity >= product.stock
+                  : false;
 
                 return (
                   <div className={styles.miniCartItem} key={item.id}>
@@ -71,6 +85,8 @@ function CartSidebar({ cartItems, productMap, totalPrice, onUpdateQuantity, onRe
                       <button
                         className={styles.miniQtyBtn}
                         onClick={() => onUpdateQuantity(item.product_id, item.quantity + 1)}
+                        disabled={atMaxStock}
+                        title={atMaxStock ? "No more stock available" : undefined}
                       >
                         +
                       </button>
@@ -95,12 +111,21 @@ function CartSidebar({ cartItems, productMap, totalPrice, onUpdateQuantity, onRe
 
               <div className={styles.miniCartTotal}>
                 <h3>Total: ${totalPrice.toFixed(2)}</h3>
-                <button
-                  className={styles.miniOrderBtn}
-                  onClick={() => setStep("shipping")}
-                >
-                  Next →
-                </button>
+                {isLoggedIn ? (
+                  <button
+                    className={styles.miniOrderBtn}
+                    onClick={() => setStep("shipping")}
+                  >
+                    Next →
+                  </button>
+                ) : (
+                  <button
+                    className={styles.miniOrderBtn}
+                    onClick={onRequireLogin}
+                  >
+                    Login to checkout
+                  </button>
+                )}
               </div>
             </>
           )}
