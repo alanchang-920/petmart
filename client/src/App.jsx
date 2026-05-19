@@ -2,12 +2,15 @@ import { useCallback, useState } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Header from "./components/Header";
 import Toast from "./components/Toast";
+import AdminTabs from "./components/AdminTabs";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import ProductManagement from "./pages/ProductManagement";
 import UserManagement from "./pages/UserManagement";
 import AdminCart from "./pages/AdminCart";
 import "./App.css";
+
+const ADMIN_VIEWS = ["user-admin", "cart-admin", "product-admin"];
 
 /**
  * Inner shell — must live below <AuthProvider> so it can call useAuth().
@@ -88,48 +91,12 @@ function AppShell() {
         />
       )}
 
-      {page === "home" &&
-        ["user-admin", "cart-admin", "product-admin"].includes(view) && (
-          <div className="admin-tabs">
-            <button
-              className={view === "user-admin" ? "admin-tab-active" : ""}
-              onClick={() => setView("user-admin")}
-            >
-              User Management
-            </button>
-
-            <button
-              className={view === "cart-admin" ? "admin-tab-active" : ""}
-              onClick={() => setView("cart-admin")}
-            >
-              Cart Management
-            </button>
-
-            <button
-              className={view === "product-admin" ? "admin-tab-active" : ""}
-              onClick={() => setView("product-admin")}
-            >
-              Product Management
-            </button>
-          </div>
-        )}
-
-      {page === "home" && view === "product-admin" && (
-        <main className="admin-layout">
-          <ProductManagement />
-        </main>
-      )}
-
-      {page === "home" && view === "cart-admin" && (
-        <main className="admin-layout">
-          <AdminCart showToast={showToast} />
-        </main>
-      )}
-
-      {page === "home" && view === "user-admin" && (
-        <main className="admin-layout">
-          <UserManagement />
-        </main>
+      {page === "home" && ADMIN_VIEWS.includes(view) && (
+        <AdminTabs activeView={view} onSelect={setView}>
+          {view === "user-admin" && <UserManagement />}
+          {view === "cart-admin" && <AdminCart showToast={showToast} />}
+          {view === "product-admin" && <ProductManagement />}
+        </AdminTabs>
       )}
     </div>
   );
