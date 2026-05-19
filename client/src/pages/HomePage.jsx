@@ -46,7 +46,12 @@ function HomePage({
     reload: reloadCart,
     applyCartToProducts,
     getCartQuantity,
-  } = useShopCart({ onNotify: showToast });
+  } = useShopCart({
+    onNotify: showToast,
+    // After a successful checkout the server has decremented stock — pull
+    // the fresh numbers so the catalog cards reflect what's really left.
+    onOrderSuccess: () => refreshProducts(),
+  });
 
   // After a login the cart stored in localStorage is the source of truth —
   // pull it back in. We deliberately do NOT clear on logout: a guest can keep

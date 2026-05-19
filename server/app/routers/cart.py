@@ -13,11 +13,15 @@ router = APIRouter(prefix="/cart", tags=["cart"])
 def get_all_cart(
     page: int = 1,
     limit: int = 10,
+    search: str | None = None,
+    status: str | None = None,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_admin),
 ):
-    """Admin-only: paginated list of every cart in the system."""
-    return cart_service.get_all_carts(db, page, limit)
+    """Admin-only: paginated list of carts with optional search + status filter."""
+    return cart_service.get_all_carts(
+        db, page=page, limit=limit, search=search, status=status
+    )
 
 
 @router.get("/{cart_id}", response_model=schemas.CartOut)

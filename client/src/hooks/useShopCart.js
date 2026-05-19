@@ -16,7 +16,7 @@ const CART_STORAGE_KEY = "cartItems";
  * @param {(message: string, type?: "success" | "error") => void} options.onNotify
  *        Toast callback used to surface success/error feedback to the user.
  */
-export default function useShopCart({ onNotify } = {}) {
+export default function useShopCart({ onNotify, onOrderSuccess } = {}) {
   const [cartItems, setCartItems] = useState(
     () => storage.getItem(CART_STORAGE_KEY) || []
   );
@@ -129,12 +129,14 @@ export default function useShopCart({ onNotify } = {}) {
         await placeOrder(payload);
         onNotify?.("Order placed successfully!", "success");
         clear();
+        // Stock on the server changed — let the caller refresh the catalog.
+        onOrderSuccess?.();
       } catch (err) {
         console.error("Failed to place order:", err);
         onNotify?.("Failed to place order", "error");
       }
     },
-    [cartItems, clear, onNotify]
+    [cartItems, clear, onNotify, onOrderSuccess]
   );
 
   const itemCount = useMemo(

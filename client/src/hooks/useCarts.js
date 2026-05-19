@@ -1,60 +1,66 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import api from "../services/api";
 
-// How many carts the admin table shows per page (matches the API `limit`).
-const PAGE_SIZE = 10;
+// Page-size options surfaced to the admin via a dropdown.
+export const PAGE_SIZE_OPTIONS = [10, 50, 100];
+const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
+// Debounce search input so we don't fire a request per keystroke.
+const SEARCH_DEBOUNCE_MS = 300;
 
 /**
  * useCarts — data layer for the admin "Cart Management" screen.
  *
  * Responsibilities:
- *  - fetch carts one page at a time from `GET /cart/`
- *  - re-fetch automatically when the page changes
+ *  - fetch a page of carts from `GET /cart/` with optional search + status filter
+ *  - debounce search input (300ms) so typing doesn't hammer the API
+ *  - reset to page 1 whenever a filter changes
  *  - expose actions to update / delete a cart and keep local state in sync
- *  - expose pagination state + navigation helpers
  *
  * @param {(message: string, type?: "success" | "error") => void} [onNotify]
- *        Optional toast callback. It is stored in a ref so that passing a new
- *        function each render does NOT cause an extra fetch.
- *
- * @returns {{
- *   carts: any[],            // carts currently displayed
- *   page: number,            // 1-based current page
- *   loading: boolean,        // a request is in flight
- *   hasNextPage: boolean,    // true while a next page might exist
- *   pageSize: number,        // PAGE_SIZE constant
- *   refresh: () => Promise<void>,   // re-fetch the current page
- *   updateCart: (cartId: number, body: object) => Promise<void>,
- *   deleteCart: (cartId: number) => Promise<void>,
- *   goToPrevPage: () => void,
- *   goToNextPage: () => void,
- * }}
+ *        Optional toast callback. Stored in a ref so a new identity each
+ *        render does NOT trigger an extra fetch.
  */
 export default function useCarts(onNotify) {
-  const [carts, setCarts] = useState([]);   // current page of carts
-  const [page, setPage] = useState(1);      // 1-based page index
+  const [carts, setCarts] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  // What we actually send to the API — `search` is debounced into this.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Keep the latest onNotify in a ref. Effects/callbacks below depend on
-  // `notify` (stable) instead of `onNotify` (new identity each render),
-  // so the cart list isn't re-fetched just because the parent re-rendered.
+  // Keep latest onNotify in a ref (stable callback identity for deps).
   const notifyRef = useRef(onNotify);
   useEffect(() => {
     notifyRef.current = onNotify;
   }, [onNotify]);
-
-  // Stable wrapper around the notify callback; safe to use as a dep.
   const notify = useCallback((message, type = "success") => {
     notifyRef.current?.(message, type);
   }, []);
 
-  // Fetch the current page of carts. Re-created only when `page` changes.
+  // Debounce: copy `search` into `debouncedSearch` after the user pauses.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Any change to a filter (search/status) or to page size starts the
+  // listing over from page 1 — otherwise the user could land on an empty
+  // page after narrowing results.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, pageSize]);
+
   const fetchCarts = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get("/cart/", {
-        params: { page, limit: PAGE_SIZE },
-      });
+      const params = { page, limit: pageSize };
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (statusFilter) params.status = statusFilter;
+      const { data } = await api.get("/cart/", { params });
       setCarts(data);
     } catch (error) {
       console.error("Failed to fetch carts:", error);
@@ -62,19 +68,12 @@ export default function useCarts(onNotify) {
     } finally {
       setLoading(false);
     }
-  }, [page, notify]);
+  }, [page, pageSize, debouncedSearch, statusFilter, notify]);
 
-  // Initial load + reload whenever the page (and thus fetchCarts) changes.
   useEffect(() => {
     fetchCarts();
   }, [fetchCarts]);
 
-  /**
-   * Persist an edit to one cart, then patch it into local state so the table
-   * updates without a full refetch.
-   * @param {number} cartId
-   * @param {object} body  fields to update (e.g. { status, recipient_name, ... })
-   */
   const updateCart = useCallback(
     async (cartId, body) => {
       await api.put(`/cart/${cartId}`, body);
@@ -86,17 +85,12 @@ export default function useCarts(onNotify) {
     [notify]
   );
 
-  /**
-   * Delete a cart. If it was the only row left on a non-first page, step back
-   * one page (which triggers a fetch); otherwise just refetch the current page.
-   * @param {number} cartId
-   */
   const deleteCart = useCallback(
     async (cartId) => {
       await api.delete(`/cart/${cartId}`);
       notify("Cart deleted", "success");
       if (carts.length === 1 && page > 1) {
-        setPage((p) => p - 1); // last item on this page -> step back
+        setPage((p) => p - 1);
       } else {
         fetchCarts();
       }
@@ -104,12 +98,14 @@ export default function useCarts(onNotify) {
     [carts.length, page, fetchCarts, notify]
   );
 
-  // We don't get a total count from the API, so we assume another page exists
-  // as long as the current page came back full.
-  const hasNextPage = carts.length === PAGE_SIZE;
+  // No total-count from API — assume another page exists while the current
+  // one came back full.
+  const hasNextPage = carts.length === pageSize;
 
-  // Pagination controls. goToPrevPage clamps at page 1.
-  const goToPrevPage = useCallback(() => setPage((p) => Math.max(1, p - 1)), []);
+  const goToPrevPage = useCallback(
+    () => setPage((p) => Math.max(1, p - 1)),
+    []
+  );
   const goToNextPage = useCallback(() => setPage((p) => p + 1), []);
 
   return {
@@ -117,7 +113,12 @@ export default function useCarts(onNotify) {
     page,
     loading,
     hasNextPage,
-    pageSize: PAGE_SIZE,
+    pageSize,
+    setPageSize,
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
     refresh: fetchCarts,
     updateCart,
     deleteCart,

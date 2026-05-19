@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
@@ -27,9 +28,44 @@ def _to_cart_out(cart: models.Cart) -> schemas.CartOut:
     )
 
 
-def get_all_carts(db: Session, page: int = 1, limit: int = 10):
-    offset = (page - 1) * limit
-    carts = db.query(models.Cart).offset(offset).limit(limit).all()
+def get_all_carts(
+    db: Session,
+    page: int = 1,
+    limit: int = 10,
+    search: str | None = None,
+    status: str | None = None,
+):
+    """Paginated list of carts with optional text search + status filter.
+
+    `search` is matched case-insensitively against recipient name, phone, and
+    shipping address — and against `cart.id` when it parses as an integer so
+    an admin can paste an ID straight in.
+    """
+    query = db.query(models.Cart)
+
+    if search:
+        term = search.strip()
+        if term:
+            like = f"%{term}%"
+            conditions = [
+                models.Cart.recipient_name.ilike(like),
+                models.Cart.phone.ilike(like),
+                models.Cart.shipping_address.ilike(like),
+            ]
+            if term.isdigit():
+                conditions.append(models.Cart.id == int(term))
+            query = query.filter(or_(*conditions))
+
+    if status:
+        query = query.filter(models.Cart.status == status)
+
+    # Newest first — admins almost always want recent activity at the top.
+    carts = (
+        query.order_by(models.Cart.id.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
     return [_to_cart_out(cart) for cart in carts]
 
 

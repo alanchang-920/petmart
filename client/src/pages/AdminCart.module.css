@@ -25,6 +25,65 @@
   cursor: not-allowed;
 }
 
+.adminFilters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.adminSearchInput {
+  flex: 1;
+  min-width: 240px;
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  background: #fafafa;
+  transition: border-color 0.15s ease, background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.adminSearchInput:focus {
+  outline: none;
+  border-color: #111827;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+.adminStatusFilter {
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.adminStatusFilter:focus {
+  outline: none;
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+.adminClearFilters {
+  border: 1px solid #d6d6d6;
+  background: white;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.adminClearFilters:hover {
+  background: #f3f4f6;
+}
+
 .adminTableWrap {
   overflow-x: auto;
   border: 1px solid #ececec;
@@ -91,9 +150,51 @@
 .adminPagination {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 16px;
   margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.adminPageSize {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.adminPageSize select {
+  border: 1px solid #d6d6d6;
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.adminPageSize select:focus {
+  outline: none;
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+.adminPageSize select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adminPageNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .adminPageInfo {
