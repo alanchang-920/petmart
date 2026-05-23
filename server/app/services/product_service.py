@@ -64,6 +64,22 @@ def delete_product(db: Session, product_id: int) -> dict:
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
+    # Refuse to delete a product that has already been ordered — silently
+    # cascading would wipe historical line items from those carts.
+    referenced = (
+        db.query(models.CartItem)
+        .filter(models.CartItem.product_id == product_id)
+        .first()
+    )
+    if referenced:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Cannot delete this product — it is referenced by one or "
+                "more existing orders. Remove or reassign those orders first."
+            ),
+        )
+
     db.delete(product)
     db.commit()
     return {"message": "Product deleted successfully"}

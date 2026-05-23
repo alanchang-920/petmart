@@ -118,6 +118,7 @@ class CartUpdateOut(BaseModel):
     phone: Optional[str] = None
     shipping_address: Optional[str] = None
     note: Optional[str] = None
+    restocked: bool = False
 
     class Config:
         from_attributes = True
@@ -132,6 +133,7 @@ class CartOut(BaseModel):
     phone: Optional[str] = None
     shipping_address: Optional[str] = None
     note: Optional[str] = None
+    restocked: bool = False
     items: list[CartItemDetail]
 
     class Config:

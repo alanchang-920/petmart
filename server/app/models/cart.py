@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DECIMAL, ForeignKey, TIMESTAMP
+from sqlalchemy import Boolean, Column, Integer, String, Text, DECIMAL, ForeignKey, TIMESTAMP
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -18,6 +18,10 @@ class Cart(Base):
     phone = Column(String(20), nullable=True)
     shipping_address = Column(Text, nullable=True)
     note = Column(Text, nullable=True)
+    # Tracks whether the cart's items have already been added back to
+    # product stock — set by auto-rollback on cancel and by the manual
+    # "Restock" admin action. Prevents double-restocking the same cart.
+    restocked = Column(Boolean, nullable=False, default=False, server_default="0")
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 

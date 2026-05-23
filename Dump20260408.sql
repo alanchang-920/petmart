@@ -59,6 +59,7 @@ CREATE TABLE `carts` (
   `phone` varchar(20) NULL,
   `shipping_address` text NULL,
   `note` text NULL,
+  `restocked` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT (now()),
   `updated_at` timestamp NULL DEFAULT (now()),
   PRIMARY KEY (`id`),
