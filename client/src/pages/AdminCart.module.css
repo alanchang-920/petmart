@@ -1,0 +1,344 @@
+.adminCartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.adminCartHeader h1 {
+  margin: 0;
+}
+
+.adminRefreshBtn,
+.adminPageBtn {
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.adminRefreshBtn:disabled,
+.adminPageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adminFilters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.adminSearchInput {
+  flex: 1;
+  min-width: 240px;
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  background: #fafafa;
+  transition: border-color 0.15s ease, background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.adminSearchInput:focus {
+  outline: none;
+  border-color: #111827;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+.adminStatusFilter {
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.adminStatusFilter:focus {
+  outline: none;
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+.adminClearFilters {
+  border: 1px solid #d6d6d6;
+  background: white;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.adminClearFilters:hover {
+  background: #f3f4f6;
+}
+
+.adminTableWrap {
+  overflow-x: auto;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.adminTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.adminTable th,
+.adminTable td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: top;
+}
+
+.adminTable thead th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #555;
+}
+
+.adminTable tbody tr:hover {
+  background: #fcfcfc;
+}
+
+.adminEmpty {
+  text-align: center;
+  color: #888;
+  padding: 28px 16px;
+}
+
+.adminItemList {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.adminStatusSelect {
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.adminDeleteBtn {
+  border: 1px solid #e0b4b4;
+  background: #fff5f5;
+  color: #c0392b;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.adminDeleteBtn:hover {
+  background: #fdecec;
+}
+
+.adminRestockBtn {
+  border: 1px solid #b4d8e0;
+  background: #f0f9fb;
+  color: #0e7490;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.adminRestockBtn:hover:not(:disabled) {
+  background: #e0f2f7;
+}
+
+.adminRestockBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.adminRestockedTag {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.adminPagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.adminPageSize {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.adminPageSize select {
+  border: 1px solid #d6d6d6;
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.adminPageSize select:focus {
+  outline: none;
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+.adminPageSize select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adminPageNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.adminPageInfo {
+  font-size: 14px;
+  color: #555;
+}
+
+.adminItemsDetails > summary {
+  cursor: pointer;
+  color: #2c6cb0;
+  font-size: 13px;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.adminItemsDetails > summary:hover {
+  text-decoration: underline;
+}
+
+.adminItemsDetails[open] > summary {
+  margin-bottom: 6px;
+}
+
+.adminItemsDetails .adminItemList {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.adminActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adminEditBtn,
+.adminSaveBtn,
+.adminCancelBtn {
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+}
+
+.adminEditBtn {
+  border-color: #b4cbe0;
+  background: #f5f9ff;
+  color: #2c6cb0;
+}
+
+.adminEditBtn:hover {
+  background: #ecf4fd;
+}
+
+.adminSaveBtn {
+  border-color: #b4d8b8;
+  background: #f3fbf4;
+  color: #2e7d32;
+}
+
+.adminSaveBtn:hover {
+  background: #ecf8ee;
+}
+
+.adminEditBtn:disabled,
+.adminSaveBtn:disabled,
+.adminCancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adminStatusBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  text-transform: capitalize;
+  background: #eee;
+  color: #555;
+}
+
+.statusPending {
+  background: #fff4d6;
+  color: #8a6d00;
+}
+
+.statusActive {
+  background: #dbeeff;
+  color: #1e5a8a;
+}
+
+.statusCompleted {
+  background: #ddf6e0;
+  color: #2e7d32;
+}
+
+.statusCancelled {
+  background: #fde2e2;
+  color: #b3261e;
+}
+
+/* Shipping cell */
+.adminShipping {
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 220px;
+}
+
+.adminShippingAddr {
+  color: #444;
+}
+
+.adminShippingNote {
+  color: #888;
+  font-style: italic;
+}

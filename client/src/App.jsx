@@ -1,318 +1,112 @@
-import { useEffect, useMemo, useState } from "react";
-import api from "./services/api";
+import { useCallback, useState } from "react";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import Header from "./components/Header";
+import Toast from "./components/Toast";
+import AdminTabs from "./components/AdminTabs";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import ProductManagement from "./pages/ProductManagement";
+import UserManagement from "./pages/UserManagement";
+import AdminCart from "./pages/AdminCart";
 import "./App.css";
 
-const placeholderImage = "/images/placeholder.jpg";
+const ADMIN_VIEWS = ["user-admin", "cart-admin", "product-admin"];
 
-function App() {
-  const [products, setProducts] = useState([]);
-  const [cartItems, setCartItems] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [sortOption, setSortOption] = useState("default");
+/**
+ * Inner shell — must live below <AuthProvider> so it can call useAuth().
+ *
+ * State-based navigation: `page` distinguishes login vs everything else;
+ * `view` chooses which "page" to show inside the home shell. Kept
+ * deliberately simple instead of pulling in react-router for an SPA
+ * with five screens.
+ */
+function AppShell() {
+  const { logout } = useAuth();
+  const [page, setPage] = useState("home");
+  const [view, setView] = useState("shop");
   const [toast, setToast] = useState(null);
+  const [showCart, setShowCart] = useState(false);
+  // Bumped by the "Shop" nav click to ask HomePage to re-fetch products.
+  const [shopRefreshKey, setShopRefreshKey] = useState(0);
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCart();
+  const showToast = useCallback((message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 2000);
   }, []);
 
-  const showToast = (message, type = "success") => {
-    setToast({ message, type });
-
-    setTimeout(() => {
-      setToast(null);
-    }, 2000);
-  };
-
-  const fetchProducts = async () => {
-    try {
-      const response = await api.get("/products/");
-      setProducts(response.data);
-    } catch (error) {
-      console.error("Failed to fetch products:", error);
-      showToast("Failed to load products", "error");
+  const handleNavigate = useCallback((nextView) => {
+    setPage("home");
+    setView(nextView);
+    if (nextView === "shop") {
+      setShopRefreshKey((k) => k + 1);
     }
-  };
+  }, []);
 
-  const fetchCart = async () => {
-    try {
-      const response = await api.get("/cart/");
-      setCartItems(response.data);
-    } catch (error) {
-      console.error("Failed to fetch cart:", error);
-      showToast("Failed to load cart", "error");
-    }
-  };
-
-  const addToCart = async (productId) => {
-    try {
-      await api.post("/cart/", {
-        product_id: productId,
-        quantity: 1,
-      });
-
-      fetchCart();
-      showToast("Added to cart!", "success");
-    } catch (error) {
-      console.error("Failed to add to cart:", error);
-      showToast("Failed to add item", "error");
-    }
-  };
-
-  const removeCartItem = async (cartItemId) => {
-    try {
-      await api.delete(`/cart/${cartItemId}`);
-      fetchCart();
-      showToast("Removed from cart!", "success");
-    } catch (error) {
-      console.error("Failed to remove cart item:", error);
-      showToast("Failed to remove item", "error");
-    }
-  };
-
-  const updateCartQuantity = async (cartItemId, newQuantity) => {
-    try {
-      if (newQuantity <= 0) {
-        await api.delete(`/cart/${cartItemId}`);
-        showToast("Removed from cart!", "success");
-      } else {
-        await api.put(`/cart/${cartItemId}`, {
-          quantity: newQuantity,
-        });
-      }
-
-      fetchCart();
-    } catch (error) {
-      console.error("Failed to update cart quantity:", error);
-      showToast("Failed to update quantity", "error");
-    }
-  };
-
-  const productMap = useMemo(() => {
-    const map = {};
-    products.forEach((product) => {
-      map[product.id] = product;
-    });
-    return map;
-  }, [products]);
-
-  const totalPrice = useMemo(() => {
-    return cartItems.reduce((total, item) => {
-      const product = productMap[item.product_id];
-      if (!product) return total;
-      return total + Number(product.price) * item.quantity;
-    }, 0);
-  }, [cartItems, productMap]);
-
-  const categories = useMemo(() => {
-    const unique = new Set(products.map((p) => p.category));
-    return ["All", ...unique];
-  }, [products]);
-
-  const filteredProducts = useMemo(() => {
-    let result = products.filter((product) => {
-      const matchSearch = product.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-
-      const matchCategory =
-        selectedCategory === "All" || product.category === selectedCategory;
-
-      return matchSearch && matchCategory;
-    });
-
-    if (sortOption === "price-low-high") {
-      result = [...result].sort((a, b) => Number(a.price) - Number(b.price));
-    } else if (sortOption === "price-high-low") {
-      result = [...result].sort((a, b) => Number(b.price) - Number(a.price));
-    } else if (sortOption === "name-a-z") {
-      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortOption === "name-z-a") {
-      result = [...result].sort((a, b) => b.name.localeCompare(a.name));
-    }
-
-    return result;
-  }, [products, searchTerm, selectedCategory, sortOption]);
+  const handleLogout = useCallback(() => {
+    logout();
+    setShowCart(false);
+    setPage("home");
+    setView("shop");
+    showToast("Logged out");
+  }, [logout, showToast]);
 
   return (
     <div className="app">
-      {toast && (
-        <div className={`toast toast-${toast.type}`}>
-          <span className="toast-icon">
-            {toast.type === "success" ? "✓" : "⚠"}
-          </span>
-          <span>{toast.message}</span>
-        </div>
+      {toast && <Toast message={toast.message} type={toast.type} />}
+
+      <Header
+        view={view}
+        onNavigate={handleNavigate}
+        onToggleCart={() => setShowCart((s) => !s)}
+        onGoLogin={() => setPage("login")}
+        onLogout={handleLogout}
+      />
+
+      {page === "login" && (
+        <LoginPage
+          showToast={showToast}
+          onLoginSuccess={(user) => {
+            setPage("home");
+            if (user?.role === "admin") {
+              setView("user-admin");
+            } else {
+              setView("shop");
+            }
+          }}
+        />
       )}
 
-      <header className="topbar">
-        <div className="topbar-inner">
-          <div className="brand">PetMart</div>
-          <nav className="nav-links">
-            <span>Home</span>
-            <span>Products</span>
-            <span>Cart</span>
-          </nav>
-        </div>
-      </header>
+      {page === "home" && view === "shop" && (
+        <HomePage
+          showToast={showToast}
+          showCart={showCart}
+          refreshKey={shopRefreshKey}
+          onOpenCart={() => setShowCart(true)}
+          onRequireLogin={() => {
+            // Guest reached the checkout step — bounce them to the login form.
+            // Cart state persists in localStorage, so it's still there afterwards.
+            setShowCart(false);
+            setPage("login");
+          }}
+        />
+      )}
 
-      <main className="shop-layout">
-        <section className="catalog-section">
-          <div className="catalog-header">
-            <div className="catalog-left">
-              <p className="breadcrumb">Home / Products</p>
-              <h1>Products</h1>
-              <p className="catalog-subtitle">
-                Discover pet essentials your companions will love.
-              </p>
-            </div>
-
-            <div className="catalog-right">
-              <label htmlFor="sort">Sort by</label>
-              <select
-                id="sort"
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
-              >
-                <option value="default">Featured</option>
-                <option value="price-low-high">Price: Low to High</option>
-                <option value="price-high-low">Price: High to Low</option>
-                <option value="name-a-z">Name: A to Z</option>
-                <option value="name-z-a">Name: Z to A</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="filter-row">
-            <div className="filter-left">
-              <span className="filter-title">Filter</span>
-            </div>
-
-            <div className="filter-controls">
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="store-grid">
-            {filteredProducts.map((product) => (
-              <div key={product.id} className="store-card">
-                <div className="store-image-wrap">
-                  <img
-                    src={product.image_url || placeholderImage}
-                    alt={product.name}
-                    className="store-image"
-                    onError={(e) => {
-                      e.target.src = placeholderImage;
-                    }}
-                  />
-                </div>
-
-                <div className="store-info">
-                  <h3>{product.name}</h3>
-
-                  <p className="store-description">{product.description}</p>
-
-                  <div className="store-meta">
-                    <p>{product.category}</p>
-                    <p>Stock: {product.stock}</p>
-                  </div>
-
-                  <div className="store-bottom">
-                    <div className="store-price">
-                      ${Number(product.price).toFixed(2)}
-                    </div>
-
-                    <button
-                      className="store-add-btn"
-                      onClick={() => addToCart(product.id)}
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <aside className="cart-sidebar">
-          <h2>Shopping Cart</h2>
-
-          {cartItems.length === 0 ? (
-            <p className="cart-empty">Your cart is empty.</p>
-          ) : (
-            <>
-              {cartItems.map((item) => {
-                const product = productMap[item.product_id];
-
-                return (
-                  <div className="mini-cart-item" key={item.id}>
-                    <h3>{product ? product.name : "Unknown Product"}</h3>
-
-                    <div className="mini-qty-controls">
-                      <button
-                        className="mini-qty-btn"
-                        onClick={() =>
-                          updateCartQuantity(item.id, item.quantity - 1)
-                        }
-                      >
-                        -
-                      </button>
-
-                      <span className="mini-qty-value">{item.quantity}</span>
-
-                      <button
-                        className="mini-qty-btn"
-                        onClick={() =>
-                          updateCartQuantity(item.id, item.quantity + 1)
-                        }
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <p className="mini-subtotal">
-                      Subtotal: $
-                      {product
-                        ? (Number(product.price) * item.quantity).toFixed(2)
-                        : "0.00"}
-                    </p>
-
-                    <button
-                      className="mini-remove-btn"
-                      onClick={() => removeCartItem(item.id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                );
-              })}
-
-              <div className="mini-cart-total">
-                <h3>Total: ${totalPrice.toFixed(2)}</h3>
-              </div>
-            </>
-          )}
-        </aside>
-      </main>
+      {page === "home" && ADMIN_VIEWS.includes(view) && (
+        <AdminTabs activeView={view} onSelect={setView}>
+          {view === "user-admin" && <UserManagement />}
+          {view === "cart-admin" && <AdminCart showToast={showToast} />}
+          {view === "product-admin" && <ProductManagement showToast={showToast} />}
+        </AdminTabs>
+      )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppShell />
+    </AuthProvider>
   );
 }
 

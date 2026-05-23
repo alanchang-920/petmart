@@ -1,0 +1,389 @@
+import { useEffect, useMemo, useState } from "react";
+import { getUsers, createUser, updateUser, deleteUser } from "../services/userService";
+import Pagination from "../components/Pagination";
+import { usePagination } from "../hooks/usePagination";
+import { getApiErrorMessage } from "../utils/apiError";
+import styles from "./UserManagement.module.css";
+
+const USERS_PER_PAGE = 10;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function UserManagement() {
+  const [users, setUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [editForm, setEditForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    role: "user",
+  });
+  const [createForm, setCreateForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    role: "user",
+  });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const loadUsers = async () => {
+    try {
+      const data = await getUsers();
+      setUsers(data);
+      setError("");
+    } catch (error) {
+      console.error(error);
+      setError(getApiErrorMessage(error, "Failed to load users"));
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const startEdit = (user) => {
+    setEditingUserId(user.id);
+    setEditForm({
+      username: user.username,
+      email: user.email,
+      password: "",
+      role: user.role,
+    });
+    setIsCreating(false);
+  };
+
+  const startCreate = () => {
+    setIsCreating(true);
+    setCreateForm({
+      username: "",
+      email: "",
+      password: "",
+      role: "user",
+    });
+    setEditingUserId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingUserId(null);
+    setEditForm({
+      username: "",
+      email: "",
+      password: "",
+      role: "user",
+    });
+  };
+
+  const cancelCreate = () => {
+    setIsCreating(false);
+    setCreateForm({
+      username: "",
+      email: "",
+      password: "",
+      role: "user",
+    });
+  };
+
+  const handleCreate = async () => {
+    if (!createForm.username.trim()) {
+      setError("Username is required");
+      return;
+    }
+    if (!EMAIL_RE.test(createForm.email.trim())) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    if (createForm.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    try {
+      await createUser(createForm);
+      setSuccess("User created successfully");
+      await loadUsers();
+      cancelCreate();
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (error) {
+      console.error(error);
+      setError(getApiErrorMessage(error, "Failed to create user"));
+    }
+  };
+
+  const handleUpdate = async (userId) => {
+    try {
+      // Only include fields that have been filled
+      const updateData = {};
+      if (editForm.username.trim()) updateData.username = editForm.username;
+      if (editForm.email.trim()) updateData.email = editForm.email;
+      if (editForm.password.trim()) updateData.password = editForm.password;
+      if (editForm.role) updateData.role = editForm.role;
+
+      if (Object.keys(updateData).length === 0) {
+        setError("Please fill in at least one field to update");
+        return;
+      }
+
+      await updateUser(userId, updateData);
+      setSuccess("User updated successfully");
+      await loadUsers();
+      cancelEdit();
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (error) {
+      console.error(error);
+      setError(getApiErrorMessage(error, "Failed to update user"));
+    }
+  };
+
+  const handleDelete = async (userId) => {
+    const user = users.find(u => u.id === userId);
+    
+    // Prevent deletion of admin users
+    if (user?.role === "admin") {
+      setError("Cannot delete admin users");
+      return;
+    }
+
+    const confirmed = window.confirm("Are you sure you want to delete this user?");
+    if (!confirmed) return;
+
+    try {
+      await deleteUser(userId);
+      setSuccess("User deleted successfully");
+      await loadUsers();
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (error) {
+      console.error(error);
+      setError(getApiErrorMessage(error, "Failed to delete user"));
+    }
+  };
+
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter((user) =>
+      [user.username, user.email, user.role]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(q))
+    );
+  }, [users, searchQuery]);
+
+  const {
+    pageItems: visibleUsers,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+  } = usePagination(filteredUsers, USERS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, setCurrentPage]);
+
+  return (
+    <div className={styles["user-management"]}>
+      <div className={styles["user-management-header"]}>
+        <h2>User Management</h2>
+        <button className={styles["btn-create"]} onClick={startCreate} disabled={isCreating}>
+          Create New User
+        </button>
+      </div>
+
+      <div className={styles["user-management-toolbar"]}>
+        <input
+          className={styles["search-input"]}
+          type="search"
+          placeholder="Search by username, email or role…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      {error && <div className={`${styles.alert} ${styles["alert-error"]}`}>{error}</div>}
+      {success && <div className={`${styles.alert} ${styles["alert-success"]}`}>{success}</div>}
+
+      <p className={styles["admin-description"]}>
+        Admin can create, view, update, and delete users.
+      </p>
+
+      {/* Create New User Modal */}
+      {isCreating && (
+        <div className="modal-overlay" onClick={cancelCreate}>
+          <div
+            className="edit-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Create New User</h3>
+            <div className={styles["form-group"]}>
+              <label>Username:</label>
+              <input
+                type="text"
+                value={createForm.username}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, username: e.target.value })
+                }
+                placeholder="Enter username"
+              />
+            </div>
+
+            <div className={styles["form-group"]}>
+              <label>Email:</label>
+              <input
+                type="email"
+                value={createForm.email}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, email: e.target.value })
+                }
+                placeholder="Enter email"
+              />
+            </div>
+
+            <div className={styles["form-group"]}>
+              <label>Password:</label>
+              <input
+                type="password"
+                value={createForm.password}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, password: e.target.value })
+                }
+                placeholder="Enter password"
+              />
+            </div>
+
+            <div className={styles["form-group"]}>
+              <label>Role:</label>
+              <select
+                value={createForm.role}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, role: e.target.value })
+                }
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            <div className={styles["form-actions"]}>
+              <button className={styles["btn-save"]} onClick={handleCreate}>
+                Create
+              </button>
+              <button className={styles["btn-cancel"]} onClick={cancelCreate}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Users Table */}
+      <table className={styles["admin-table"]}>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {visibleUsers.map((user) => (
+            <tr key={user.id} className={editingUserId === user.id ? styles["editing"] : ""}>
+              <td>{user.id}</td>
+
+              <td>
+                {editingUserId === user.id ? (
+                  <input
+                    type="text"
+                    value={editForm.username}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, username: e.target.value })
+                    }
+                    placeholder={user.username}
+                  />
+                ) : (
+                  user.username
+                )}
+              </td>
+
+              <td>
+                {editingUserId === user.id ? (
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, email: e.target.value })
+                    }
+                    placeholder={user.email}
+                  />
+                ) : (
+                  user.email
+                )}
+              </td>
+
+              <td>
+                {editingUserId === user.id ? (
+                  <select
+                    value={editForm.role}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, role: e.target.value })
+                    }
+                  >
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                ) : (
+                  <span className={`${styles["role-badge"]} ${styles[`role-${user.role}`]}`}>
+                    {user.role}
+                  </span>
+                )}
+              </td>
+
+              <td>
+                {editingUserId === user.id ? (
+                  <>
+                    <button className={styles["btn-save"]} onClick={() => handleUpdate(user.id)}>
+                      Save
+                    </button>
+                    <button className={styles["btn-cancel"]} onClick={cancelEdit}>
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className={styles["btn-edit"]} onClick={() => startEdit(user)}>
+                      Edit
+                    </button>
+                    <button 
+                      className={styles["btn-delete"]} 
+                      onClick={() => handleDelete(user.id)}
+                      disabled={user.role === "admin"}
+                      title={user.role === "admin" ? "Cannot delete admin users" : ""}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {filteredUsers.length === 0 && !isCreating && (
+        <p className={styles["no-users"]}>
+          {users.length === 0 ? "No users found." : "No users match your search."}
+        </p>
+      )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+    </div>
+  );
+}
+
+export default UserManagement;
