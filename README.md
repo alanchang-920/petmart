@@ -173,6 +173,17 @@ Build for production with `npm run build` (output goes to `client/dist`).
 
 ---
 
+## Test accounts
+
+Pre-seeded in the SQL dump (`Dump20260408.sql`):
+
+| Role  | Email               | Password   |
+| ----- | ------------------- | ---------- |
+| Admin | `admin@gmail.com`   | `12345678` |
+| User  | `test2@gmail.com`   | `12345678` |
+
+---
+
 ## Features
 
 ### Customer
