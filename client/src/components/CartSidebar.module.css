@@ -156,29 +156,33 @@
 }
 
 .shippingForm {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid #eee;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #ececec;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+}
+
+.shippingHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 2px;
 }
 
 .shippingForm h3 {
-  margin: 0 0 4px;
-  font-size: 14px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.2px;
 }
 
-.shippingForm input,
-.shippingForm textarea {
-  width: 100%;
-  border: 1px solid #d0d0d0;
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 13px;
-  font-family: inherit;
-  box-sizing: border-box;
-  resize: vertical;
+.shippingSubtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
 }
 
 .shippingField {
@@ -187,13 +191,112 @@
   gap: 4px;
 }
 
+.shippingField label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.optional {
+  color: #9ca3af;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 4px;
+}
+
+.shippingForm input,
+.shippingForm textarea {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  background: #fafafa;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #111827;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: border-color 0.15s ease, background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.shippingForm input::placeholder,
+.shippingForm textarea::placeholder {
+  color: #9ca3af;
+}
+
+.shippingForm input:focus,
+.shippingForm textarea:focus {
+  outline: none;
+  border-color: #111827;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
 .shippingField .inputError {
   border-color: #ef4444;
+  background: #fff5f5;
+}
+
+.shippingField .inputError:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
 }
 
 .fieldError {
   color: #dc2626;
   font-size: 12px;
+  font-weight: 500;
+}
+
+.shippingFooter {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ececec;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shippingTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.shippingTotalLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.shippingTotalValue {
+  font-size: 24px;
+  font-weight: 900;
+  color: #111827;
+  letter-spacing: -0.5px;
+}
+
+.shippingActions {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+}
+
+.shippingActions .miniBackBtn,
+.shippingActions .miniOrderBtn {
+  align-self: stretch;
+  margin: 0;
 }
 
 @media (max-width: 1100px) {

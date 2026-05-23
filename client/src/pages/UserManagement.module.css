@@ -24,6 +24,26 @@
   font-size: 14px;
 }
 
+.user-management-toolbar {
+  margin-bottom: 20px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
 /* Alerts */
 .alert {
   padding: 12px 16px;
@@ -102,11 +122,18 @@
 .btn-cancel {
   padding: 8px 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+}
+
+/* Row-level action buttons sit side-by-side in the table — give them a
+   consistent right margin so Edit/Save never butts against Delete/Cancel. */
+.btn-edit,
+.btn-save {
+  margin-right: 8px;
 }
 
 .btn-create {
@@ -126,7 +153,7 @@
 .btn-edit {
   background-color: #2196F3;
   color: white;
-  padding: 6px 12px;
+  padding: 6px 14px;
   font-size: 12px;
 }
 
@@ -137,7 +164,7 @@
 .btn-delete {
   background-color: #f44336;
   color: white;
-  padding: 6px 12px;
+  padding: 6px 14px;
   font-size: 12px;
 }
 
@@ -154,6 +181,8 @@
 .btn-save {
   background-color: #4CAF50;
   color: white;
+  padding: 6px 14px;
+  font-size: 12px;
 }
 
 .btn-save:hover {
@@ -163,10 +192,21 @@
 .btn-cancel {
   background-color: #757575;
   color: white;
+  padding: 6px 14px;
+  font-size: 12px;
 }
 
 .btn-cancel:hover {
   background-color: #616161;
+}
+
+/* Restore full-size styling for the form-level Create/Save/Cancel triplet,
+   which is *not* in a table row and shouldn't shrink to 12px. */
+.form-actions .btn-save,
+.form-actions .btn-cancel,
+.form-actions .btn-create {
+  padding: 8px 16px;
+  font-size: 14px;
 }
 
 /* Table */

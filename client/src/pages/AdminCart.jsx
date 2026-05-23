@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { STATUS_OPTIONS } from "../utils/shipping";
-import useCarts from "../hooks/useCarts";
+import useCarts, { PAGE_SIZE_OPTIONS } from "../hooks/useCarts";
 import styles from "./AdminCart.module.css";
 
 const COLUMN_COUNT = 6;
@@ -165,12 +165,24 @@ function AdminCart({ showToast }) {
     page,
     loading,
     hasNextPage,
+    pageSize,
+    setPageSize,
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
     refresh,
     updateCart,
     deleteCart,
     goToPrevPage,
     goToNextPage,
   } = useCarts(showToast);
+
+  const hasFilter = search.trim() !== "" || statusFilter !== "";
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("");
+  };
 
   return (
     <section>
@@ -179,6 +191,37 @@ function AdminCart({ showToast }) {
         <button className={styles.adminRefreshBtn} onClick={refresh} disabled={loading}>
           {loading ? "Loading..." : "Refresh"}
         </button>
+      </div>
+
+      <div className={styles.adminFilters}>
+        <input
+          type="search"
+          className={styles.adminSearchInput}
+          placeholder="Search by ID, recipient, phone or address…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select
+          className={styles.adminStatusFilter}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All statuses</option>
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        {hasFilter && (
+          <button
+            type="button"
+            className={styles.adminClearFilters}
+            onClick={clearFilters}
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       <div className={styles.adminTableWrap}>
@@ -197,7 +240,11 @@ function AdminCart({ showToast }) {
             {carts.length === 0 ? (
               <tr>
                 <td colSpan={COLUMN_COUNT} className={styles.adminEmpty}>
-                  {loading ? "Loading carts..." : "No carts found."}
+                  {loading
+                    ? "Loading carts..."
+                    : hasFilter
+                    ? "No carts match the current filters."
+                    : "No carts found."}
                 </td>
               </tr>
             ) : (
@@ -216,21 +263,38 @@ function AdminCart({ showToast }) {
       </div>
 
       <div className={styles.adminPagination}>
-        <button
-          className={styles.adminPageBtn}
-          onClick={goToPrevPage}
-          disabled={page === 1 || loading}
-        >
-          ‹ Prev
-        </button>
-        <span className={styles.adminPageInfo}>Page {page}</span>
-        <button
-          className={styles.adminPageBtn}
-          onClick={goToNextPage}
-          disabled={!hasNextPage || loading}
-        >
-          Next ›
-        </button>
+        <label className={styles.adminPageSize}>
+          Rows per page
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            disabled={loading}
+          >
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className={styles.adminPageNav}>
+          <button
+            className={styles.adminPageBtn}
+            onClick={goToPrevPage}
+            disabled={page === 1 || loading}
+          >
+            ‹ Prev
+          </button>
+          <span className={styles.adminPageInfo}>Page {page}</span>
+          <button
+            className={styles.adminPageBtn}
+            onClick={goToNextPage}
+            disabled={!hasNextPage || loading}
+          >
+            Next ›
+          </button>
+        </div>
       </div>
     </section>
   );
