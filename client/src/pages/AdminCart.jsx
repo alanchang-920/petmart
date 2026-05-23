@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { STATUS_OPTIONS } from "../utils/shipping";
 import useCarts, { PAGE_SIZE_OPTIONS } from "../hooks/useCarts";
+import { getApiErrorMessage } from "../utils/apiError";
 import styles from "./AdminCart.module.css";
 
 const COLUMN_COUNT = 6;
@@ -55,9 +56,10 @@ function ItemsSummary({ items }) {
 // One row of the admin table: shows a cart and lets an admin change its
 // status or delete it. Shipping info is read-only here. Owns its own
 // edit/save UI state; persistence is delegated up via onUpdate / onDelete.
-function CartRow({ cart, onUpdate, onDelete, onNotify }) {
+function CartRow({ cart, onUpdate, onDelete, onRestock, onNotify }) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRestocking, setIsRestocking] = useState(false);
   // Only the status is editable in the admin table.
   const [statusDraft, setStatusDraft] = useState(cart.status || "pending");
 
@@ -96,7 +98,32 @@ function CartRow({ cart, onUpdate, onDelete, onNotify }) {
     }
   };
 
+  const handleRestock = async () => {
+    if (
+      !window.confirm(
+        `Add this cart's items back to product stock?\n` +
+          `Use this for returns on completed orders. ` +
+          `Cannot be undone or repeated.`
+      )
+    ) {
+      return;
+    }
+    setIsRestocking(true);
+    try {
+      await onRestock(cart.id);
+    } catch (err) {
+      console.error("Failed to restock cart:", err);
+      notify(getApiErrorMessage(err, "Failed to restock"), "error");
+    } finally {
+      setIsRestocking(false);
+    }
+  };
+
   const status = cart.status || "pending";
+  // Manual restock only makes sense once the cart has reached a terminal
+  // state — pending/active carts still hold their stock against the order.
+  const canRestock =
+    !cart.restocked && (status === "completed" || status === "cancelled");
 
   return (
     <tr>
@@ -146,6 +173,24 @@ function CartRow({ cart, onUpdate, onDelete, onNotify }) {
               <button className={styles.adminEditBtn} onClick={startEdit}>
                 Edit
               </button>
+              {canRestock && (
+                <button
+                  className={styles.adminRestockBtn}
+                  onClick={handleRestock}
+                  disabled={isRestocking}
+                  title="Add this cart's items back to product stock"
+                >
+                  {isRestocking ? "Restocking..." : "Restock"}
+                </button>
+              )}
+              {cart.restocked && (
+                <span
+                  className={styles.adminRestockedTag}
+                  title="Stock has already been restored for this cart"
+                >
+                  Restocked
+                </span>
+              )}
               <button className={styles.adminDeleteBtn} onClick={handleDelete}>
                 Delete
               </button>
@@ -174,6 +219,7 @@ function AdminCart({ showToast }) {
     refresh,
     updateCart,
     deleteCart,
+    restockCart,
     goToPrevPage,
     goToNextPage,
   } = useCarts(showToast);
@@ -254,6 +300,7 @@ function AdminCart({ showToast }) {
                   cart={cart}
                   onUpdate={updateCart}
                   onDelete={deleteCart}
+                  onRestock={restockCart}
                   onNotify={showToast}
                 />
               ))

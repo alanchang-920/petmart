@@ -22,3 +22,7 @@ export function updateCart(cartId, body) {
 export function deleteCart(cartId) {
   return api.delete(`/cart/${cartId}`).then((res) => res.data);
 }
+
+export function restockCart(cartId) {
+  return api.post(`/cart/${cartId}/restock`).then((res) => res.data);
+}

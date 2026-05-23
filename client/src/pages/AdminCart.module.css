@@ -147,6 +147,36 @@
   background: #fdecec;
 }
 
+.adminRestockBtn {
+  border: 1px solid #b4d8e0;
+  background: #f0f9fb;
+  color: #0e7490;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.adminRestockBtn:hover:not(:disabled) {
+  background: #e0f2f7;
+}
+
+.adminRestockBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.adminRestockedTag {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  white-space: nowrap;
+  cursor: default;
+}
+
 .adminPagination {
   display: flex;
   align-items: center;

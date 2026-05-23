@@ -15,6 +15,7 @@ def _to_cart_out(cart: models.Cart) -> schemas.CartOut:
         phone=cart.phone,
         shipping_address=cart.shipping_address,
         note=cart.note,
+        restocked=bool(cart.restocked),
         items=[
             schemas.CartItemDetail(
                 id=item.id,
@@ -146,12 +147,64 @@ def add_to_cart(
     return cart
 
 
+# Statuses from which a cancel must replenish stock. "completed" is
+# excluded on purpose: the goods are already with the customer, so a
+# cancellation there is a return, handled by a different flow.
+RESTOCK_ON_CANCEL_FROM = {"pending", "active"}
+
+
 def update_cart(cart_id: int, cart_update: schemas.CartUpdate, db: Session):
     cart = db.query(models.Cart).filter(models.Cart.id == cart_id).first()
     if not cart:
         raise HTTPException(status_code=404, detail="Cart not found")
-    for field, value in cart_update.model_dump(exclude_unset=True).items():
+
+    # Snapshot status BEFORE applying the patch — we use it to decide
+    # whether the transition warrants a stock rollback.
+    previous_status = cart.status
+
+    updates = cart_update.model_dump(exclude_unset=True)
+    for field, value in updates.items():
         setattr(cart, field, value)
+
+    # Auto-restock on the pending/active → cancelled transition only.
+    # The `restocked` flag is the single source of truth — guarding on it
+    # means we never double-restock, even if status flips around.
+    if (
+        "status" in updates
+        and updates["status"] == "cancelled"
+        and previous_status in RESTOCK_ON_CANCEL_FROM
+        and not cart.restocked
+    ):
+        _restock_cart_items(cart)
+        cart.restocked = True
+
+    db.commit()
+    db.refresh(cart)
+    return cart
+
+
+def _restock_cart_items(cart: models.Cart) -> None:
+    """Add each line item's quantity back to its product's stock."""
+    for item in cart.items:
+        if item.product is not None:
+            item.product.stock += item.quantity
+
+
+def restock_cart(cart_id: int, db: Session) -> models.Cart:
+    """Admin-triggered manual restock — used for returns on completed orders
+    or any other case the auto-rollback skipped. Idempotent via the
+    `restocked` flag."""
+    cart = db.query(models.Cart).filter(models.Cart.id == cart_id).first()
+    if not cart:
+        raise HTTPException(status_code=404, detail="Cart not found")
+
+    if cart.restocked:
+        raise HTTPException(
+            status_code=400, detail="This cart has already been restocked."
+        )
+
+    _restock_cart_items(cart)
+    cart.restocked = True
     db.commit()
     db.refresh(cart)
     return cart

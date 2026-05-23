@@ -60,3 +60,16 @@ def delete_cart(
     _: models.User = Depends(require_admin),
 ):
     return cart_service.delete_cart(cart_id, db)
+
+
+@router.post("/{cart_id}/restock", response_model=schemas.CartOut)
+def restock_cart(
+    cart_id: int,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
+    """Admin-only: add this cart's line-item quantities back to product
+    stock. Used for returns on completed orders, or any case the
+    pending/active → cancelled auto-rollback didn't cover. Idempotent."""
+    cart = cart_service.restock_cart(cart_id, db)
+    return cart_service._to_cart_out(cart)

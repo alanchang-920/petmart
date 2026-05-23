@@ -76,9 +76,12 @@ export default function useCarts(onNotify) {
 
   const updateCart = useCallback(
     async (cartId, body) => {
-      await api.put(`/cart/${cartId}`, body);
+      // Merge the server response (not just `body`) so fields the backend
+      // mutates as a side effect — e.g. `restocked` flipping when status
+      // transitions to "cancelled" — show up immediately without a refresh.
+      const { data } = await api.put(`/cart/${cartId}`, body);
       setCarts((prev) =>
-        prev.map((cart) => (cart.id === cartId ? { ...cart, ...body } : cart))
+        prev.map((cart) => (cart.id === cartId ? { ...cart, ...data } : cart))
       );
       notify("Cart updated", "success");
     },
@@ -96,6 +99,19 @@ export default function useCarts(onNotify) {
       }
     },
     [carts.length, page, fetchCarts, notify]
+  );
+
+  const restockCart = useCallback(
+    async (cartId) => {
+      const { data } = await api.post(`/cart/${cartId}/restock`);
+      // Merge the server response so the row reflects `restocked: true`
+      // without an extra round-trip.
+      setCarts((prev) =>
+        prev.map((cart) => (cart.id === cartId ? { ...cart, ...data } : cart))
+      );
+      notify("Stock restored from this cart", "success");
+    },
+    [notify]
   );
 
   // No total-count from API — assume another page exists while the current
@@ -122,6 +138,7 @@ export default function useCarts(onNotify) {
     refresh: fetchCarts,
     updateCart,
     deleteCart,
+    restockCart,
     goToPrevPage,
     goToNextPage,
   };
