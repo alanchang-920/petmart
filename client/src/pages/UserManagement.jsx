@@ -1,9 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getUsers, createUser, updateUser, deleteUser } from "../services/userService";
+import Pagination from "../components/Pagination";
+import { usePagination } from "../hooks/usePagination";
+import { getApiErrorMessage } from "../utils/apiError";
 import styles from "./UserManagement.module.css";
+
+const USERS_PER_PAGE = 10;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingUserId, setEditingUserId] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -28,7 +35,7 @@ function UserManagement() {
       setError("");
     } catch (error) {
       console.error(error);
-      setError("Failed to load users");
+      setError(getApiErrorMessage(error, "Failed to load users"));
     }
   };
 
@@ -79,21 +86,20 @@ function UserManagement() {
   };
 
   const handleCreate = async () => {
-    try {
-      // Validate form
-      if (!createForm.username.trim()) {
-        setError("Username is required");
-        return;
-      }
-      if (!createForm.email.trim()) {
-        setError("Email is required");
-        return;
-      }
-      if (!createForm.password.trim()) {
-        setError("Password is required");
-        return;
-      }
+    if (!createForm.username.trim()) {
+      setError("Username is required");
+      return;
+    }
+    if (!EMAIL_RE.test(createForm.email.trim())) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    if (createForm.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
 
+    try {
       await createUser(createForm);
       setSuccess("User created successfully");
       await loadUsers();
@@ -101,7 +107,7 @@ function UserManagement() {
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       console.error(error);
-      setError("Failed to create user: " + error.message);
+      setError(getApiErrorMessage(error, "Failed to create user"));
     }
   };
 
@@ -126,7 +132,7 @@ function UserManagement() {
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       console.error(error);
-      setError("Failed to update user: " + error.message);
+      setError(getApiErrorMessage(error, "Failed to update user"));
     }
   };
 
@@ -149,9 +155,30 @@ function UserManagement() {
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       console.error(error);
-      setError("Failed to delete user: " + error.message);
+      setError(getApiErrorMessage(error, "Failed to delete user"));
     }
   };
+
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter((user) =>
+      [user.username, user.email, user.role]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(q))
+    );
+  }, [users, searchQuery]);
+
+  const {
+    pageItems: visibleUsers,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+  } = usePagination(filteredUsers, USERS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, setCurrentPage]);
 
   return (
     <div className={styles["user-management"]}>
@@ -162,6 +189,16 @@ function UserManagement() {
         </button>
       </div>
 
+      <div className={styles["user-management-toolbar"]}>
+        <input
+          className={styles["search-input"]}
+          type="search"
+          placeholder="Search by username, email or role…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       {error && <div className={`${styles.alert} ${styles["alert-error"]}`}>{error}</div>}
       {success && <div className={`${styles.alert} ${styles["alert-success"]}`}>{success}</div>}
 
@@ -169,66 +206,71 @@ function UserManagement() {
         Admin can create, view, update, and delete users.
       </p>
 
-      {/* Create New User Form */}
+      {/* Create New User Modal */}
       {isCreating && (
-        <div className={styles["create-form-container"]}>
-          <h3>Create New User</h3>
-          <div className={styles["form-group"]}>
-            <label>Username:</label>
-            <input
-              type="text"
-              value={createForm.username}
-              onChange={(e) =>
-                setCreateForm({ ...createForm, username: e.target.value })
-              }
-              placeholder="Enter username"
-            />
-          </div>
+        <div className="modal-overlay" onClick={cancelCreate}>
+          <div
+            className="edit-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Create New User</h3>
+            <div className={styles["form-group"]}>
+              <label>Username:</label>
+              <input
+                type="text"
+                value={createForm.username}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, username: e.target.value })
+                }
+                placeholder="Enter username"
+              />
+            </div>
 
-          <div className={styles["form-group"]}>
-            <label>Email:</label>
-            <input
-              type="email"
-              value={createForm.email}
-              onChange={(e) =>
-                setCreateForm({ ...createForm, email: e.target.value })
-              }
-              placeholder="Enter email"
-            />
-          </div>
+            <div className={styles["form-group"]}>
+              <label>Email:</label>
+              <input
+                type="email"
+                value={createForm.email}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, email: e.target.value })
+                }
+                placeholder="Enter email"
+              />
+            </div>
 
-          <div className={styles["form-group"]}>
-            <label>Password:</label>
-            <input
-              type="password"
-              value={createForm.password}
-              onChange={(e) =>
-                setCreateForm({ ...createForm, password: e.target.value })
-              }
-              placeholder="Enter password"
-            />
-          </div>
+            <div className={styles["form-group"]}>
+              <label>Password:</label>
+              <input
+                type="password"
+                value={createForm.password}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, password: e.target.value })
+                }
+                placeholder="Enter password"
+              />
+            </div>
 
-          <div className={styles["form-group"]}>
-            <label>Role:</label>
-            <select
-              value={createForm.role}
-              onChange={(e) =>
-                setCreateForm({ ...createForm, role: e.target.value })
-              }
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+            <div className={styles["form-group"]}>
+              <label>Role:</label>
+              <select
+                value={createForm.role}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, role: e.target.value })
+                }
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
 
-          <div className={styles["form-actions"]}>
-            <button className={styles["btn-save"]} onClick={handleCreate}>
-              Create
-            </button>
-            <button className={styles["btn-cancel"]} onClick={cancelCreate}>
-              Cancel
-            </button>
+            <div className={styles["form-actions"]}>
+              <button className={styles["btn-save"]} onClick={handleCreate}>
+                Create
+              </button>
+              <button className={styles["btn-cancel"]} onClick={cancelCreate}>
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -246,7 +288,7 @@ function UserManagement() {
         </thead>
 
         <tbody>
-          {users.map((user) => (
+          {visibleUsers.map((user) => (
             <tr key={user.id} className={editingUserId === user.id ? styles["editing"] : ""}>
               <td>{user.id}</td>
 
@@ -329,9 +371,17 @@ function UserManagement() {
         </tbody>
       </table>
 
-      {users.length === 0 && !isCreating && (
-        <p className={styles["no-users"]}>No users found.</p>
+      {filteredUsers.length === 0 && !isCreating && (
+        <p className={styles["no-users"]}>
+          {users.length === 0 ? "No users found." : "No users match your search."}
+        </p>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 }

@@ -1,32 +1,44 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   fetchProducts as fetchProductsApi,
   createProduct,
   updateProduct,
   deleteProduct,
 } from "../services/productService";
+import Pagination from "../components/Pagination";
+import { usePagination } from "../hooks/usePagination";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const placeholderImage = "/images/placeholder.jpg";
+const PRODUCTS_PER_PAGE = 8;
 
-function ProductManagement() {
+const emptyForm = {
+  name: "",
+  description: "",
+  price: "",
+  category: "",
+  image_url: "",
+  stock: "",
+};
+
+function ProductManagement({ showToast }) {
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    price: "",
-    category: "",
-    image_url: "",
-    stock: "",
-  });
-
+  const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Fallback to console when no toast callback is wired (e.g. unit tests).
+  const notify = (message, type = "success") =>
+    showToast ? showToast(message, type) : console.log(`[${type}]`, message);
 
   const fetchProducts = async () => {
     try {
       setProducts(await fetchProductsApi());
     } catch (error) {
       console.error("Failed to fetch products:", error);
+      notify(getApiErrorMessage(error, "Failed to load products"), "error");
     }
   };
 
@@ -41,17 +53,18 @@ function ProductManagement() {
     });
   };
 
-  const resetForm = () => {
-    setForm({
-      name: "",
-      description: "",
-      price: "",
-      category: "",
-      image_url: "",
-      stock: "",
-    });
+  const closeModals = () => {
+    setForm(emptyForm);
     setEditingId(null);
     setShowEditModal(false);
+    setShowCreateModal(false);
+  };
+
+  const openCreateModal = () => {
+    setForm(emptyForm);
+    setEditingId(null);
+    setShowEditModal(false);
+    setShowCreateModal(true);
   };
 
   const handleAddProduct = async (e) => {
@@ -65,12 +78,12 @@ function ProductManagement() {
 
     try {
       await createProduct(productData);
-      alert("Product added successfully");
-      resetForm();
+      notify("Product added successfully");
+      closeModals();
       fetchProducts();
     } catch (error) {
       console.error("Failed to add product:", error);
-      alert("Failed to add product. Admin login may be required.");
+      notify(getApiErrorMessage(error, "Failed to add product"), "error");
     }
   };
 
@@ -85,12 +98,12 @@ function ProductManagement() {
 
     try {
       await updateProduct(editingId, productData);
-      alert("Product updated successfully");
-      resetForm();
+      notify("Product updated successfully");
+      closeModals();
       fetchProducts();
     } catch (error) {
       console.error("Failed to update product:", error);
-      alert("Failed to update product. Admin login may be required.");
+      notify(getApiErrorMessage(error, "Failed to update product"), "error");
     }
   };
 
@@ -106,6 +119,7 @@ function ProductManagement() {
       stock: product.stock || "",
     });
 
+    setShowCreateModal(false);
     setShowEditModal(true);
   };
 
@@ -118,13 +132,106 @@ function ProductManagement() {
 
     try {
       await deleteProduct(id);
-      alert("Product deleted successfully");
+      notify("Product deleted successfully");
       fetchProducts();
     } catch (error) {
       console.error("Failed to delete product:", error);
-      alert("Failed to delete product. Admin login may be required.");
+      notify(getApiErrorMessage(error, "Failed to delete product"), "error");
     }
   };
+
+  const filteredProducts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) =>
+      [p.name, p.description, p.category]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(q))
+    );
+  }, [products, searchQuery]);
+
+  const {
+    pageItems: visibleProducts,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+  } = usePagination(filteredProducts, PRODUCTS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, setCurrentPage]);
+
+  const renderProductForm = (onSubmit, submitLabel) => (
+    <form onSubmit={onSubmit} className="modal-form">
+      <input
+        className="admin-input"
+        name="name"
+        placeholder="Product name"
+        value={form.name}
+        onChange={handleChange}
+        required
+      />
+
+      <input
+        className="admin-input"
+        name="description"
+        placeholder="Description"
+        value={form.description}
+        onChange={handleChange}
+      />
+
+      <input
+        className="admin-input"
+        name="price"
+        type="number"
+        step="0.01"
+        placeholder="Price"
+        value={form.price}
+        onChange={handleChange}
+        required
+      />
+
+      <input
+        className="admin-input"
+        name="category"
+        placeholder="Category"
+        value={form.category}
+        onChange={handleChange}
+      />
+
+      <input
+        className="admin-input"
+        name="image_url"
+        placeholder="Image URL"
+        value={form.image_url}
+        onChange={handleChange}
+      />
+
+      <input
+        className="admin-input"
+        name="stock"
+        type="number"
+        placeholder="Stock"
+        value={form.stock}
+        onChange={handleChange}
+        required
+      />
+
+      <div className="modal-actions">
+        <button className="admin-submit-btn" type="submit">
+          {submitLabel}
+        </button>
+
+        <button
+          className="admin-cancel-btn"
+          type="button"
+          onClick={closeModals}
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
 
   return (
     <div className="admin-page">
@@ -134,75 +241,30 @@ function ProductManagement() {
         Manage products, inventory, and store listings.
       </p>
 
-      {/* Add Product Form */}
-      <form onSubmit={handleAddProduct} className="admin-form">
-        <h2>Add Product</h2>
+      <div className="admin-toolbar-actions">
+        <button
+          className="admin-submit-btn"
+          type="button"
+          onClick={openCreateModal}
+        >
+          + Create Product
+        </button>
+      </div>
 
-        <div className="admin-form-grid">
-          <input
-            className="admin-input"
-            name="name"
-            placeholder="Product name"
-            value={!showEditModal ? form.name : ""}
-            onChange={handleChange}
-            required
-          />
-
-          <input
-            className="admin-input"
-            name="description"
-            placeholder="Description"
-            value={!showEditModal ? form.description : ""}
-            onChange={handleChange}
-          />
-
-          <input
-            className="admin-input"
-            name="price"
-            type="number"
-            step="0.01"
-            placeholder="Price"
-            value={!showEditModal ? form.price : ""}
-            onChange={handleChange}
-            required
-          />
-
-          <input
-            className="admin-input"
-            name="category"
-            placeholder="Category"
-            value={!showEditModal ? form.category : ""}
-            onChange={handleChange}
-          />
-
-          <input
-            className="admin-input"
-            name="image_url"
-            placeholder="Image URL"
-            value={!showEditModal ? form.image_url : ""}
-            onChange={handleChange}
-          />
-
-          <input
-            className="admin-input"
-            name="stock"
-            type="number"
-            placeholder="Stock"
-            value={!showEditModal ? form.stock : ""}
-            onChange={handleChange}
-            required
-          />
-
-          <button className="admin-submit-btn" type="submit">
-            Add Product
-          </button>
-        </div>
-      </form>
+      <div className="admin-toolbar">
+        <input
+          className="admin-input admin-search"
+          type="search"
+          placeholder="Search by name, description or category…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
 
       <h2 className="admin-section-title">Product List</h2>
 
       <div className="admin-product-grid">
-        {products.map((product) => (
+        {visibleProducts.map((product) => (
           <div key={product.id} className="admin-product-card">
             <img
               src={product.image_url || placeholderImage}
@@ -240,81 +302,30 @@ function ProductManagement() {
         ))}
       </div>
 
-      {/* Edit Popup Modal */}
+      {filteredProducts.length === 0 && (
+        <p className="admin-empty">No products match your search.</p>
+      )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={closeModals}>
+          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Create Product</h2>
+            {renderProductForm(handleAddProduct, "Create Product")}
+          </div>
+        </div>
+      )}
+
       {showEditModal && (
-        <div className="modal-overlay">
-          <div className="edit-modal">
+        <div className="modal-overlay" onClick={closeModals}>
+          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
             <h2>Edit Product</h2>
-
-            <form onSubmit={handleUpdateProduct} className="modal-form">
-              <input
-                className="admin-input"
-                name="name"
-                placeholder="Product name"
-                value={form.name}
-                onChange={handleChange}
-                required
-              />
-
-              <input
-                className="admin-input"
-                name="description"
-                placeholder="Description"
-                value={form.description}
-                onChange={handleChange}
-              />
-
-              <input
-                className="admin-input"
-                name="price"
-                type="number"
-                step="0.01"
-                placeholder="Price"
-                value={form.price}
-                onChange={handleChange}
-                required
-              />
-
-              <input
-                className="admin-input"
-                name="category"
-                placeholder="Category"
-                value={form.category}
-                onChange={handleChange}
-              />
-
-              <input
-                className="admin-input"
-                name="image_url"
-                placeholder="Image URL"
-                value={form.image_url}
-                onChange={handleChange}
-              />
-
-              <input
-                className="admin-input"
-                name="stock"
-                type="number"
-                placeholder="Stock"
-                value={form.stock}
-                onChange={handleChange}
-                required
-              />
-
-              <div className="modal-actions">
-                <button className="admin-submit-btn" type="submit">
-                  Save Changes
-                </button>
-
-                <button
-                  className="admin-cancel-btn"
-                  type="button"
-                  onClick={resetForm}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+            {renderProductForm(handleUpdateProduct, "Save Changes")}
           </div>
         </div>
       )}

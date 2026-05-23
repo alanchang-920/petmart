@@ -136,7 +136,11 @@ testable in isolation.
 
 ```bash
 docker compose up -d         # starts MySQL on localhost:3306
-mysql -u root -p < Dump20260408.sql   # load the sample schema + seed data
+# `Dump20260408.sql` is auto-loaded into the `petmart` database by
+# docker-compose (see the volume mount). No manual import needed.
+#
+# If you'd rather use an existing MySQL server, run:
+#   mysql -u root -p petmart < Dump20260408.sql
 ```
 
 ### 2. Backend (FastAPI)

@@ -95,7 +95,7 @@ function AppShell() {
         <AdminTabs activeView={view} onSelect={setView}>
           {view === "user-admin" && <UserManagement />}
           {view === "cart-admin" && <AdminCart showToast={showToast} />}
-          {view === "product-admin" && <ProductManagement />}
+          {view === "product-admin" && <ProductManagement showToast={showToast} />}
         </AdminTabs>
       )}
     </div>
