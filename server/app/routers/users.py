@@ -20,6 +20,11 @@ def register_user(payload: schemas.UserCreate, db: Session = Depends(get_db)):
     return user_service.register_user(db, payload)
 
 
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
 @router.post("/login")
 def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
