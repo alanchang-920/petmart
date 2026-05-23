@@ -1,6 +1,8 @@
 import { FaShoppingCart } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 
+const ADMIN_VIEWS = ["product-admin", "cart-admin", "user-admin"];
+
 /**
  * Top navigation bar. Receives the current view and a setter from App,
  * then renders the appropriate links based on auth + role.
@@ -16,7 +18,7 @@ function Header({ view, onNavigate, onToggleCart, onGoLogin, onLogout }) {
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === "admin";
 
-  const linkClass = (key) => (view === key ? "nav-active" : "");
+  const navClass = (isActive) => `nav-link ${isActive ? "nav-active" : ""}`;
 
   return (
     <header className="topbar">
@@ -24,35 +26,45 @@ function Header({ view, onNavigate, onToggleCart, onGoLogin, onLogout }) {
         <div className="brand">PetMart</div>
 
         <nav className="nav-links">
-          <span className={linkClass("shop")} onClick={() => onNavigate("shop")}>
+          <button
+            type="button"
+            className={navClass(view === "shop")}
+            onClick={() => onNavigate("shop")}
+          >
             Shop
-          </span>
+          </button>
 
           {isAdmin && (
-            <span
-            className={
-              ["product-admin", "cart-admin", "user-admin"].includes(view)
-              ? "nav-active"
-              : ""
-            }
-            onClick={() => onNavigate("user-admin")}
-          >
-            Admin
-          </span>
-       )}
+            <button
+              type="button"
+              className={navClass(ADMIN_VIEWS.includes(view))}
+              onClick={() => onNavigate("user-admin")}
+            >
+              Admin
+            </button>
+          )}
 
           {!currentUser ? (
-            <span onClick={onGoLogin}>Login</span>
+            <button type="button" className="nav-link" onClick={onGoLogin}>
+              Login
+            </button>
           ) : (
             <>
-              <span>{currentUser.username}</span>
-              <span onClick={onLogout}>Logout</span>
+              <span className="nav-username">{currentUser.username}</span>
+              <button type="button" className="nav-link" onClick={onLogout}>
+                Logout
+              </button>
             </>
           )}
 
           {/* Cart icon is always available — guests can build a cart and are
               prompted to log in only at checkout. */}
-          <button className="cart-icon-btn" onClick={onToggleCart}>
+          <button
+            type="button"
+            className="cart-icon-btn"
+            onClick={onToggleCart}
+            aria-label="Toggle shopping cart"
+          >
             <FaShoppingCart size={20} />
           </button>
         </nav>
